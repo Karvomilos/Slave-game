@@ -101,6 +101,65 @@ def player_dict(row: Any) -> dict[str, Any]:
     }
 
 
+def snapshot_age_hours(snapshot: dict[str, Any]) -> int:
+    born_at = snapshot.get("slaveBornAt")
+    if not isinstance(born_at, (int, float)):
+        return 0
+    ended_at = snapshot.get("slaveEndedAt")
+    if not isinstance(ended_at, (int, float)):
+        ended_at = datetime.now(timezone.utc).timestamp() * 1000
+    return max(0, int((ended_at - born_at) / 3_600_000))
+
+
+def snapshot_level(snapshot: dict[str, Any]) -> int:
+    base_mult = snapshot.get("baseMult", 1)
+    belt_level = snapshot.get("beltLevel", 0)
+    base = base_mult if isinstance(base_mult, (int, float)) else 1
+    belt = belt_level if isinstance(belt_level, (int, float)) else 0
+    return max(1, 1 + int(max(0, base - 1) * 20) + int(belt))
+
+
+def auction_lot_dict(row: Any) -> dict[str, Any]:
+    try:
+        snapshot = json.loads(row["slave_stats"])
+    except (TypeError, json.JSONDecodeError):
+        snapshot = {}
+    age_hours = max(row["age_hours"], snapshot_age_hours(snapshot)) if row["status"] == "active" else row["age_hours"]
+    return {
+        "id": row["id"],
+        "seller_id": row["seller_id"],
+        "seller_name": row["seller_name"] if "seller_name" in row.keys() else "Игрок",
+        "slave_name": row["slave_name"],
+        "slave_no": row["slave_no"],
+        "level": row["slave_level"],
+        "fetish": row["fetish"],
+        "price": row["price"],
+        "age_hours": age_hours,
+        "status": row["status"],
+    }
+
+
+def transferred_slave(snapshot: dict[str, Any], age_hours: int) -> dict[str, Any]:
+    transferred = dict(snapshot)
+    for key in (
+        "displayName", "nicknameChanges", "ownedProfileCards", "profileCard",
+        "quest", "weekly", "mquest", "mistressLevel", "decorVarOwned",
+    ):
+        transferred.pop(key, None)
+    slave_state = dict(transferred.get("state") or {})
+    slave_state["coins"] = 0
+    slave_state["gems"] = 0
+    transferred["state"] = slave_state
+    transferred["slavesKilled"] = 0
+    transferred["oldestSlaveAgeDays"] = age_hours // 24
+    transferred["oldestSlaveAgeHours"] = age_hours
+    transferred["oldestSlaveNo"] = transferred.get("slaveNo", 1)
+    transferred["slaveEndedAt"] = None
+    transferred["slaveEndReason"] = None
+    transferred["gone"] = False
+    return transferred
+
+
 class LoadRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     init_data: str = Field(alias="initData")
@@ -129,6 +188,15 @@ class NicknameRequest(LoadRequest):
 
 class PaymentRequest(LoadRequest):
     product: Literal["gems_10", "gems_60", "gems_150", "vip"]
+
+
+class AuctionCreateRequest(LoadRequest):
+    price: int = Field(gt=0, le=1_000_000)
+    stats: PlayerStats
+
+
+class AuctionBuyRequest(LoadRequest):
+    lot_id: int = Field(gt=0)
 
 
 class PaymentNotification(BaseModel):
@@ -238,7 +306,8 @@ def load_data(request: LoadRequest) -> dict[str, Any]:
     user = authenticate(request.init_data)
     username = username_for(user)
     with database() as connection:
-        row = connection.execute("SELECT * FROM players WHERE id = ?", (user["id"],)).fetchone()
+        row = connection.execute("SELECT * FROM players WHERE id = ? FOR UPDATE", (user["id"],)).fetchone()
+        rating_reset = bool(row and row["rating_reset_pending"])
         if row is None:
             referrer = None
             if request.referrer_id and request.referrer_id != user["id"]:
@@ -261,12 +330,14 @@ def load_data(request: LoadRequest) -> dict[str, Any]:
                 )
         else:
             connection.execute(
-                "UPDATE players SET username = ? WHERE id = ?",
+                "UPDATE players SET username = ?, pending_crystals = 0, rating_reset_pending = FALSE WHERE id = ?",
                 (username, user["id"]),
             )
         connection.commit()
         row = connection.execute("SELECT * FROM players WHERE id = ?", (user["id"],)).fetchone()
-    return player_dict(row)
+    result = player_dict(row)
+    result["rating_reset_applied"] = rating_reset
+    return result
 
 
 @app.post("/api/save_data")
@@ -275,42 +346,71 @@ def save_data(request: SaveRequest) -> dict[str, Any]:
     stats = request.stats
     oldest_age_hours = max(stats.oldest_slave_age_hours, stats.oldest_slave_age_days * 24)
     with database() as connection:
-        row = connection.execute("SELECT id FROM players WHERE id = ?", (user["id"],)).fetchone()
+        row = connection.execute("SELECT * FROM players WHERE id = ? FOR UPDATE", (user["id"],)).fetchone()
         if row is None:
             connection.execute(
                 "INSERT INTO players (id, username) VALUES (?, ?)",
                 (user["id"], username_for(user)),
             )
+            row = connection.execute(
+                "SELECT * FROM players WHERE id = ? FOR UPDATE", (user["id"],)
+            ).fetchone()
+        try:
+            stored_snapshot = json.loads(row["current_slave_stats"] or "{}")
+        except (TypeError, json.JSONDecodeError):
+            stored_snapshot = {}
+        stored_uid = stored_snapshot.get("slaveUid")
+        incoming_uid = stats.current_slave_stats.get("slaveUid")
+        if stored_uid and incoming_uid != stored_uid:
+            raise HTTPException(status_code=409, detail="Персонаж изменился в другой вкладке. Обновите игру.")
+        if not stored_uid and incoming_uid:
+            listed = connection.execute(
+                """
+                SELECT id FROM auction_lots
+                WHERE seller_id = ? AND slave_uid = ? AND status IN ('active', 'sold')
+                ORDER BY id DESC LIMIT 1
+                """,
+                (user["id"], incoming_uid),
+            ).fetchone()
+            if listed:
+                raise HTTPException(status_code=409, detail="Этот персонаж уже выставлен или продан. Обновите игру.")
+        rating_reset = row["rating_reset_pending"]
+        saved_stats = dict(stats.current_slave_stats)
+        oldest_days = stats.oldest_slave_age_days
+        oldest_no = stats.oldest_slave_no
+        if rating_reset:
+            oldest_age_hours = 0
+            oldest_days = 0
+            oldest_no = 1
+            saved_stats["oldestSlaveAgeDays"] = 0
+            saved_stats["oldestSlaveAgeHours"] = 0
+            saved_stats["oldestSlaveNo"] = 1
         connection.execute(
             """
             UPDATE players
-            SET username = ?, coins = ?, crystals = ?, slaves_killed = ?,
-                current_slave_stats = ?, vip_status = ?,
-                oldest_slave_age_days = GREATEST(oldest_slave_age_days, ?),
+            SET username = ?, coins = ?, crystals = ?, pending_crystals = 0, slaves_killed = ?,
+                current_slave_stats = ?, vip_status = ?, rating_reset_pending = FALSE,
+                oldest_slave_age_days = CASE WHEN ? THEN 0 ELSE GREATEST(oldest_slave_age_days, ?) END,
                 oldest_slave_no = CASE
+                    WHEN ? THEN 1
                     WHEN ? > oldest_slave_age_hours THEN ?
                     ELSE oldest_slave_no
                 END,
-                oldest_slave_age_hours = GREATEST(oldest_slave_age_hours, ?)
+                oldest_slave_age_hours = CASE WHEN ? THEN 0 ELSE GREATEST(oldest_slave_age_hours, ?) END
             WHERE id = ?
             """,
             (
-                username_for(user),
-                stats.coins,
-                stats.crystals,
-                stats.slaves_killed,
-                json.dumps(stats.current_slave_stats, ensure_ascii=False),
-                stats.vip_status,
-                stats.oldest_slave_age_days,
-                oldest_age_hours,
-                stats.oldest_slave_no,
-                oldest_age_hours,
-                user["id"],
+                username_for(user), stats.coins, stats.crystals + row["pending_crystals"],
+                stats.slaves_killed, json.dumps(saved_stats, ensure_ascii=False), stats.vip_status,
+                rating_reset, oldest_days, rating_reset, oldest_age_hours, oldest_no,
+                rating_reset, oldest_age_hours, user["id"],
             ),
         )
         connection.commit()
         row = connection.execute("SELECT * FROM players WHERE id = ?", (user["id"],)).fetchone()
-    return player_dict(row)
+    result = player_dict(row)
+    result["rating_reset_applied"] = rating_reset
+    return result
 
 
 @app.post("/api/profile/nickname")
@@ -441,6 +541,158 @@ def payment_webhook(notification: PaymentNotification) -> dict[str, bool]:
             )
         connection.commit()
     return {"ok": True}
+
+
+@app.get("/api/auction")
+def auction_list() -> dict[str, list[dict[str, Any]]]:
+    with database() as connection:
+        rows = connection.execute(
+            """
+            SELECT lots.*, players.display_name AS seller_name
+            FROM auction_lots AS lots
+            JOIN players ON players.id = lots.seller_id
+            WHERE lots.status = 'active'
+            ORDER BY lots.created_at DESC, lots.id DESC LIMIT 100
+            """
+        ).fetchall()
+    return {"lots": [auction_lot_dict(row) for row in rows]}
+
+
+@app.post("/api/auction/list")
+def auction_create(request: AuctionCreateRequest) -> dict[str, Any]:
+    user = authenticate(request.init_data)
+    stats = request.stats
+    snapshot = dict(stats.current_slave_stats)
+    slave_uid = str(snapshot.get("slaveUid") or "")
+    slave_no = snapshot.get("slaveNo")
+    if not slave_uid or len(slave_uid) > 80 or not isinstance(slave_no, int) or slave_no < 1:
+        raise HTTPException(status_code=400, detail="Обновите игру перед созданием лота")
+    if snapshot.get("gone"):
+        raise HTTPException(status_code=400, detail="Нельзя выставить завершённого персонажа")
+    snapshot["slaveUid"] = slave_uid
+    age_hours = snapshot_age_hours(snapshot)
+    slave_name = f"Подопытный {slave_no:03d}"
+    fetish = str(snapshot.get("fetish") or "Неизвестно")[:80]
+    with database() as connection:
+        seller = connection.execute(
+            "SELECT * FROM players WHERE id = ? FOR UPDATE", (user["id"],)
+        ).fetchone()
+        if seller is None:
+            raise HTTPException(status_code=409, detail="Сначала загрузите игровой профиль")
+        try:
+            stored_snapshot = json.loads(seller["current_slave_stats"] or "{}")
+        except (TypeError, json.JSONDecodeError):
+            stored_snapshot = {}
+        if stored_snapshot.get("slaveUid") and stored_snapshot.get("slaveUid") != slave_uid:
+            raise HTTPException(status_code=409, detail="Этот персонаж уже сменился. Обновите игру.")
+        active = connection.execute(
+            "SELECT id FROM auction_lots WHERE seller_id = ? AND status = 'active'",
+            (user["id"],),
+        ).fetchone()
+        if active:
+            raise HTTPException(status_code=409, detail="У вас уже есть активный лот")
+        created_at = datetime.now(timezone.utc).isoformat()
+        lot = connection.execute(
+            """
+            INSERT INTO auction_lots (
+                seller_id, slave_uid, slave_name, slave_no, slave_level, fetish,
+                price, slave_stats, age_hours, status, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?) RETURNING *
+            """,
+            (
+                user["id"], slave_uid, slave_name, slave_no, snapshot_level(snapshot),
+                fetish, request.price, json.dumps(snapshot, ensure_ascii=False), age_hours, created_at,
+            ),
+        ).fetchone()
+        pending = seller["pending_crystals"]
+        oldest_hours = max(stats.oldest_slave_age_hours, stats.oldest_slave_age_days * 24)
+        connection.execute(
+            """
+            UPDATE players
+            SET coins = ?, crystals = ?, pending_crystals = 0, current_slave_stats = '{}',
+                slaves_killed = ?, oldest_slave_age_days = GREATEST(oldest_slave_age_days, ?),
+                oldest_slave_no = CASE WHEN ? > oldest_slave_age_hours THEN ? ELSE oldest_slave_no END,
+                oldest_slave_age_hours = GREATEST(oldest_slave_age_hours, ?)
+            WHERE id = ?
+            """,
+            (
+                stats.coins, stats.crystals + pending, stats.slaves_killed,
+                stats.oldest_slave_age_days, oldest_hours, stats.oldest_slave_no,
+                oldest_hours, user["id"],
+            ),
+        )
+        connection.commit()
+        seller = connection.execute("SELECT * FROM players WHERE id = ?", (user["id"],)).fetchone()
+    return {"lot": auction_lot_dict(lot), "player": player_dict(seller)}
+
+
+@app.post("/api/auction/buy")
+def auction_buy(request: AuctionBuyRequest) -> dict[str, Any]:
+    user = authenticate(request.init_data)
+    with database() as connection:
+        lot = connection.execute(
+            "SELECT * FROM auction_lots WHERE id = ? FOR UPDATE", (request.lot_id,)
+        ).fetchone()
+        if lot is None or lot["status"] != "active":
+            raise HTTPException(status_code=409, detail="Лот уже продан")
+        if lot["seller_id"] == user["id"]:
+            raise HTTPException(status_code=400, detail="Нельзя купить собственный лот")
+        rows = connection.execute(
+            "SELECT * FROM players WHERE id IN (?, ?) ORDER BY id FOR UPDATE",
+            (lot["seller_id"], user["id"]),
+        ).fetchall()
+        players = {row["id"]: row for row in rows}
+        buyer = players.get(user["id"])
+        seller = players.get(lot["seller_id"])
+        if buyer is None or seller is None:
+            raise HTTPException(status_code=409, detail="Профиль участника не найден")
+        if buyer["crystals"] < lot["price"]:
+            raise HTTPException(status_code=400, detail="Недостаточно кристаллов")
+        snapshot = json.loads(lot["slave_stats"])
+        age_hours = max(lot["age_hours"], snapshot_age_hours(snapshot))
+        transferred = transferred_slave(snapshot, age_hours)
+        buyer_oldest_hours = max(buyer["oldest_slave_age_hours"], buyer["oldest_slave_age_days"] * 24)
+        oldest_no = lot["slave_no"] if age_hours > buyer_oldest_hours else buyer["oldest_slave_no"]
+        connection.execute(
+            """
+            UPDATE players
+            SET crystals = crystals - ?, pending_crystals = 0, rating_reset_pending = FALSE, current_slave_stats = ?,
+                oldest_slave_age_days = GREATEST(oldest_slave_age_days, ?),
+                oldest_slave_age_hours = GREATEST(oldest_slave_age_hours, ?),
+                oldest_slave_no = ?
+            WHERE id = ?
+            """,
+            (
+                lot["price"], json.dumps(transferred, ensure_ascii=False), age_hours // 24,
+                age_hours, oldest_no, user["id"],
+            ),
+        )
+        connection.execute(
+            """
+            UPDATE players
+            SET crystals = crystals + ?, pending_crystals = pending_crystals + ?,
+                rating_reset_pending = CASE WHEN oldest_slave_no = ? THEN TRUE ELSE rating_reset_pending END,
+                oldest_slave_age_days = CASE WHEN oldest_slave_no = ? THEN 0 ELSE oldest_slave_age_days END,
+                oldest_slave_age_hours = CASE WHEN oldest_slave_no = ? THEN 0 ELSE oldest_slave_age_hours END,
+                oldest_slave_no = CASE WHEN oldest_slave_no = ? THEN 1 ELSE oldest_slave_no END
+            WHERE id = ?
+            """,
+            (
+                lot["price"], lot["price"], lot["slave_no"], lot["slave_no"],
+                lot["slave_no"], lot["slave_no"], lot["seller_id"],
+            ),
+        )
+        connection.execute(
+            """
+            UPDATE auction_lots
+            SET status = 'sold', buyer_id = ?, age_hours = ?, sold_at = ?
+            WHERE id = ?
+            """,
+            (user["id"], age_hours, datetime.now(timezone.utc).isoformat(), request.lot_id),
+        )
+        connection.commit()
+        buyer = connection.execute("SELECT * FROM players WHERE id = ?", (user["id"],)).fetchone()
+    return {"lot_id": request.lot_id, "player": player_dict(buyer)}
 
 
 @app.get("/api/leaderboard")

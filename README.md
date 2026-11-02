@@ -82,6 +82,9 @@ https://slave-game-1.onrender.com/api/payments/yookassa
 - `POST /api/load_data` — создаёт игрока, применяет `referrer_id` при первом входе и возвращает прогресс.
 - `POST /api/save_data` — сохраняет прогресс.
 - `POST /api/referral` — возвращает ссылку и число приглашений.
+- `GET /api/auction` — активные лоты с уровнем, склонностью, возрастом и ценой.
+- `POST /api/auction/list` — атомарно выставляет текущего персонажа и освобождает место для нового.
+- `POST /api/auction/buy` — атомарно переводит кристаллы продавцу, а персонажа и его рейтинговый возраст — покупателю.
 - `POST /api/payments/create` — создаёт платёж для `gems_10`, `gems_60`, `gems_150` или `vip`.
 - `POST /api/payments/yookassa` — проверенный webhook начисления.
 - `GET /api/leaderboard` — таблицы лидеров.

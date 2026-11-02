@@ -3,6 +3,33 @@
   const bubble = document.getElementById('bubble');
   const statusText = document.getElementById('status-text');
   const SVGNS = 'http://www.w3.org/2000/svg';
+  let censorshipOn = false;
+  try { censorshipOn = localStorage.getItem('p001_censorship') === '1'; } catch (e) {}
+  const SAFE_FETISHES = {
+    'Пояс верности': 'Верность', 'Оковы': 'Дисциплина', 'Унижение': 'Критика',
+    'Футфетиш': 'Внимание', 'Боль': 'Стойкость', 'Лохматый': 'Лохматый', 'Туалетный': 'Чистота'
+  };
+  function displayFetish(value) { return censorshipOn ? SAFE_FETISHES[value] || 'Характер' : value; }
+  function slaveDisplayName(number = slaveNo) { return `${censorshipOn ? 'Слуга' : 'Подопытный'} ${String(number).padStart(3, '0')}`; }
+  function softenText(text) {
+    if (!censorshipOn) return text;
+    return String(text)
+      .replace(/Подопытный/g, 'Слуга').replace(/подопытного/g, 'слугу').replace(/подопытному/g, 'слуге')
+      .replace(/подопытным/g, 'слугой').replace(/подопытные/g, 'слуги').replace(/подопытный/g, 'слуга')
+      .replace(/рабов/g, 'слуг').replace(/раба/g, 'слугу').replace(/рабу/g, 'слуге').replace(/рабом/g, 'слугой').replace(/Раб(?![а-яё])/g, 'Слуга').replace(/раб(?![а-яё])/g, 'слуга')
+      .replace(/Потакание/g, 'Поощрение').replace(/потакание/g, 'поощрение').replace(/потаканием/g, 'поощрением')
+      .replace(/Унизить/g, 'Поругать').replace(/унизить/g, 'поругать').replace(/Унижение/g, 'Критика').replace(/унижение/g, 'критика').replace(/унижения/g, 'критики').replace(/унижением/g, 'критикой')
+      .replace(/порков/g, 'занятий').replace(/порки/g, 'занятия').replace(/порку/g, 'занятие').replace(/Порка/g, 'Дисциплина').replace(/порка/g, 'дисциплина')
+      .replace(/Выпороть/g, 'Наказать').replace(/выпороть/g, 'наказать').replace(/Ударить/g, 'Влепить').replace(/ударить/g, 'влепить')
+      .replace(/Госпожа/g, 'Наставница').replace(/Госпожи/g, 'Наставницы').replace(/Госпожу/g, 'Наставницу').replace(/госпожа/g, 'наставница')
+      .replace(/Склонность/g, 'Характер').replace(/склонность/g, 'характер').replace(/склонностью/g, 'характером')
+      .replace(/оковы/gi, 'ограничители').replace(/ошейник/gi, 'бейдж').replace(/кляп/gi, 'пауза')
+      .replace(/фетиш/gi, 'характер').replace(/плеть/gi, 'инструмент').replace(/кнут/gi, 'инструмент');
+  }
+  function lines(name) {
+    if (censorshipOn && SAFE_PHRASES[name]) return SAFE_PHRASES[name];
+    return phrases[name];
+  }
 
   /* ================= СОСТОЯНИЕ ================= */
   let slaveNo = 1;
@@ -390,6 +417,26 @@
   phrases.shave.push('Гладко. Теперь холод имеет полный доступ.', 'Бритва поёт тонко. Я подпеваю.');
   phrases.cut.push('Не заплачу. Вода дороже.', 'Порез заживёт. К лучшему ли — не знаю.');
 
+  const SAFE_PHRASES = {
+    feed: ['Спасибо, это очень кстати.', 'Сытость возвращает хорошие мысли.', 'Вкусно. Я готов к новым задачам.', 'Забота — тоже часть дисциплины.'],
+    hit: ['Ай! Буду внимательнее.', 'Понял, больше не буду.', 'Ш-ш-ш! Звонко получилось.', 'Ой! Исправлюсь.'],
+    shame: ['Хм( Я правда старался.', 'Понимаю. Скажите, как сделать лучше.', 'Обидно, но замечание принято.', 'Хм( Постараюсь вас порадовать.'],
+    whip: ['Пи-и! Я всё понял!', 'Пи! Дисциплина усвоена.', 'Пи-и-и! Буду стараться лучше.', 'Пи! В следующий раз получится.'],
+    idle: ['Интересно, что мы будем делать сегодня?', 'Я придумал новый план на день.', 'Тихо. Можно немного помечтать.', 'Надеюсь, вы довольны моей работой.'],
+    idlePoor: ['Скромно, зато всё по-настоящему.', 'Уют начинается с хорошего настроения.', 'Здесь спокойно.'],
+    idleRich: ['Как красиво! Я постараюсь всё сохранить.', 'В такой комнате хочется творить.', 'Спасибо за такую обстановку.'],
+    thrown: ['Ой, неожиданная прогулка!', 'Кажется, я не туда посмотрел.', 'Уже встаю!'],
+    overfeed: ['Спасибо, но я уже сыт.', 'Оставим немного на потом.', 'Большая порция! Поделимся?'],
+    fallen: ['Всё в порядке, уже поднимаюсь.', 'Небольшая пауза не помешает.', 'Ой. Продолжим с того же места.'],
+    shave: ['Аккуратно и красиво. Спасибо.', 'Новый образ готов.', 'Так намного удобнее.'],
+    cut: ['Ой, будьте аккуратнее.', 'Небольшая царапина. Всё хорошо.', 'Давайте продолжим осторожно.'],
+    window: ['Какой хороший день для новых свершений.', 'Мне нравится смотреть на небо.', 'За окном красиво.'],
+    chair: ['Удобно. Спасибо.', 'Можно обдумать новые идеи.', 'Хорошее место для отдыха.'],
+    bed: ['Отличный отдых.', 'Так и спится спокойно.', 'Спасибо за заботу.'],
+    trash: ['Порядок начинается с малого.', 'Посмотрим, что можно использовать заново.', 'Наведём здесь уют.'],
+    surgery: ['Новый образ завершён.', 'Выгляжу иначе. Интересно!', 'Готов к следующему заданию.']
+  };
+
   /* отклики на предметы: одна вещь — много настроений */
   const ITEM_SAY = {
     collar: ['Теперь я официально ваш. Почта работает.', 'Ошейник. Потеряюсь — вернут по адресу.', 'Тесноват. Как и всё в этой жизни.', 'Табличку с именем пришлёшь? Или номер сойдёт?'],
@@ -423,7 +470,13 @@
   phrases.trash = ['Я смотрю на эту кучу — и вижу семейный портрет.', 'Мусор к мусору. Прах к праху. Логистика налажена.', 'В этой куче больше от меня, чем во мне.', 'Однажды меня выбросят. Уйду по знакомому адресу.', 'Не сортируй. Мы с ней одной фракции.', 'Копаешься в отбросах? Осторожно. Там я.', 'Куча пахнет свободой. Свобода пахла именно так.'];
   phrases.surgery = ['Операция прошла. Пациент почти не кричал. Наркоза не было.', 'Скальпель, нить, шрам. Я — твоя рукопись.', 'Тело — чертёж. Ты его перечертила.', 'Проснулся другим. Вопрос: лучше ли?', 'Кости скрипят по-новому. Привыкаю к себе заново.'];
 
-  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const pick = arr => {
+    if (censorshipOn) {
+      const safeName = Object.keys(phrases).find(name => phrases[name] === arr && SAFE_PHRASES[name]);
+      if (safeName) arr = SAFE_PHRASES[safeName];
+    }
+    return arr[Math.floor(Math.random() * arr.length)];
+  };
 
   const $ = id => document.getElementById(id);
 
@@ -757,6 +810,29 @@
     if (AC && AC.state !== 'closed') AC.suspend().catch(() => {});
   });
 
+  function applyCensorship() {
+    document.body.classList.toggle('safe-mode', censorshipOn);
+    $('censor-toggle').checked = censorshipOn;
+    document.querySelectorAll('[data-safe]').forEach(element => {
+      if (!element.dataset.uncensored) element.dataset.uncensored = element.innerHTML;
+      element.innerHTML = censorshipOn ? element.dataset.safe : element.dataset.uncensored;
+    });
+    $('scene-slave-tag').textContent = slaveDisplayName();
+    $('auction-title').textContent = censorshipOn ? 'АУКЦИОН СЛУГ' : 'АУКЦИОН РАБОВ';
+    if ($('auction-modal').classList.contains('open')) {
+      renderAuctionCurrent();
+      loadAuction();
+    }
+    if ($('leaderboard-modal').classList.contains('open')) loadLeaderboard();
+    render();
+  }
+  $('censor-toggle').addEventListener('change', () => {
+    censorshipOn = $('censor-toggle').checked;
+    try { localStorage.setItem('p001_censorship', censorshipOn ? '1' : '0'); } catch (e) {}
+    applyCensorship();
+    say(censorshipOn ? 'Детский режим включён. Термины и реплики смягчены.' : 'Цензура отключена.');
+  });
+
   function setMoreMenu(open) {
     $('more-menu').hidden = !open;
     $('btn-more').setAttribute('aria-expanded', String(open));
@@ -804,7 +880,7 @@
     }
     // слом духа: достоинство помечено навсегда
     if (spiritBroken) {
-      $('v-dignity').textContent = 'СЛОМЛЕН';
+      $('v-dignity').textContent = censorshipOn ? 'УСТАЛ' : 'СЛОМЛЕН';
       $('st-dignity').classList.add('crit');
     }
     $('v-coins').textContent = state.coins;
@@ -821,16 +897,16 @@
     const beltLabel = $('belt-label');
     beltLabel.textContent = 'Пояс послушания: ' + BELT[beltLevel].name + (beltBroken ? ' · СЛОМАН' : '');
     beltLabel.classList.toggle('broken', beltBroken);
-    $('fetish-label').textContent = 'Склонность: ' + (dossierUnlocked ? fetish : '??? · см. Досье');
+    $('fetish-label').textContent = (censorshipOn ? 'Характер: ' : 'Склонность: ') + (dossierUnlocked ? displayFetish(fetish) : '??? · см. Досье');
     $('decor-label').textContent = 'Комната: ' + comfort + '/' + MAX_COMFORT + (comfort ? ' · ×' + comfortMult().toFixed(2) : '');
-    $('respect-label').textContent = 'Обращение: ' + (comfort >= 10 ? '«госпожа»' : comfort >= 4 ? '«на вы»' : '«на ты»');
+    $('respect-label').textContent = 'Обращение: ' + (censorshipOn && comfort >= 10 ? '«наставница»' : comfort >= 10 ? '«госпожа»' : comfort >= 4 ? '«на вы»' : '«на ты»');
     const qd = questDef();
     const ql = $('quest-label');
     if (quest.done) { ql.textContent = 'Задание дня: выполнено ✓'; ql.classList.add('done'); }
     else {
       ql.classList.remove('done');
       const p = qd.ev === 'collarTime' ? Math.floor(quest.progress / 60) + '/' + (qd.target / 60) + ' мин' : Math.floor(quest.progress) + '/' + qd.target;
-      ql.textContent = 'Задание: ' + qd.text + ' (' + p + ')';
+      ql.textContent = softenText('Задание: ' + qd.text + ' (' + p + ')');
     }
     $('btn-indulge').disabled = Date.now() < indulgeCdUntil;
     document.querySelectorAll('button.buy[data-slot]').forEach(btn => {
@@ -972,7 +1048,7 @@
   }
   function renderProfile() {
     $('profile-nickname').textContent = displayName;
-    $('profile-slave').textContent = 'Подопытный ' + padNo();
+    $('profile-slave').textContent = slaveDisplayName();
     $('profile-card-name').textContent = 'Карточка: ' + PROFILE_CARDS[profileCard].name;
     $('profile-nickname-price').textContent = nicknameChanges ? 'Смена ника: 500 клятв' : 'Первая смена ника бесплатно';
     $('profile-card').className = 'profile-card' + (profileCard === 'plain' ? '' : ' card-' + profileCard);
@@ -1078,7 +1154,7 @@
   /* ---------- реплики ---------- */
   let bubbleTimer;
   function say(text) {
-    bubble.textContent = text;
+    bubble.textContent = softenText(text);
     bubble.classList.add('show');
     clearTimeout(bubbleTimer);
     bubbleTimer = setTimeout(() => bubble.classList.remove('show'), 2200);
@@ -1300,7 +1376,11 @@
       });
       const stolen = Math.min(state.coins, Math.max(5, Math.round(state.coins * 0.3)));
       state.coins -= stolen;
-      $('escape-text').innerHTML = `Агрессия достигла предела. Оковы разорваны.<br>Он <b>украл ${stolen} монет</b> и растворился во тьме.`;
+      const escapeHtml = `Агрессия достигла предела. Оковы разорваны.<br>Он <b>украл ${stolen} монет</b> и растворился во тьме.`;
+      $('escape-text').dataset.uncensored = escapeHtml;
+      $('escape-text').innerHTML = censorshipOn
+        ? `Слуга завершил обучение и унёс <b>${stolen} монет</b>.`
+        : escapeHtml;
       pet.classList.add('escape');
       setTimeout(() => openModal('escape-modal'), 1100);
       render();
@@ -1310,6 +1390,7 @@
   function newSlave() {
     oldestSlaveAgeDays = Math.max(oldestSlaveAgeDays, currentSlaveAgeDays());
     slaveNo++;
+    slaveUid = newSlaveUid();
     fetish = rollFetish();
     gone = false;
     slaveBornAt = Date.now();
@@ -1335,7 +1416,7 @@
     marksG.innerHTML = '';
     applyOutfit();
     $('slave-no').textContent = padNo();
-    $('scene-slave-tag').textContent = 'Подопытный ' + padNo();
+    $('scene-slave-tag').textContent = slaveDisplayName();
     closeModal('death'); closeModal('escape-modal');
     say(`Подопытный ${padNo()} доставлен. Склонность неизвестна — изучите его.`);
     sfx.gem();
@@ -2416,7 +2497,144 @@
   $('tab-btn-craft').addEventListener('click', () => { invTab('craft'); sfx.coin(); });
   $('btn-wardrobe').addEventListener('click', () => { openModal('wardrobe-modal'); sfx.coin(); });
   $('btn-decor').addEventListener('click', () => { openModal('decor-modal'); sfx.coin(); });
-  $('btn-auction').addEventListener('click', () => { sfx.coin(); say('Скоро!'); });
+  function auctionLevel() {
+    return Math.max(1, 1 + Math.floor(Math.max(0, baseMult - 1) * 20) + beltLevel);
+  }
+  function auctionAge(hours) {
+    const value = Math.max(0, Math.floor(hours || 0));
+    return `${Math.floor(value / 24)} дн. ${value % 24} ч.`;
+  }
+  function renderAuctionCurrent() {
+    $('auction-current').replaceChildren();
+    const name = document.createElement('b');
+    name.textContent = slaveDisplayName();
+    const details = document.createTextNode(` · ${auctionAge(currentSlaveAgeHours())} · ${censorshipOn ? 'Характер' : 'Фетиш'}: ${displayFetish(fetish)}`);
+    $('auction-current').append(name, details);
+    $('auction-current-level').textContent = `Уровень ${auctionLevel()}`;
+    $('auction-sell').disabled = gone || !initData;
+    $('auction-sell').textContent = gone ? 'Недоступно' : 'Выставить';
+  }
+  function renderAuctionLots(lots) {
+    const container = $('auction-lots');
+    container.replaceChildren();
+    if (!lots.length) {
+      const empty = document.createElement('p');
+      empty.className = 'auction-empty';
+      empty.textContent = 'Открытых лотов пока нет.';
+      container.appendChild(empty);
+      return;
+    }
+    for (const lot of lots) {
+      const card = document.createElement('article');
+      const mine = String(lot.seller_id) === String(telegramUserId);
+      card.className = 'auction-lot' + (mine ? ' mine' : '');
+      const info = document.createElement('div');
+      const title = document.createElement('h4');
+      title.textContent = slaveDisplayName(lot.slave_no);
+      const details = document.createElement('p');
+      details.textContent = `Уровень ${lot.level} · ${censorshipOn ? 'Характер' : 'Фетиш'}: ${displayFetish(lot.fetish)} · Возраст: ${auctionAge(lot.age_hours)}`;
+      const seller = document.createElement('p');
+      seller.textContent = `Продавец: ${lot.seller_name || 'Игрок'}`;
+      info.append(title, details, seller);
+      const side = document.createElement('div');
+      side.className = 'auction-lot-side';
+      const price = document.createElement('span');
+      price.className = 'auction-lot-price';
+      price.textContent = `◆ ${lot.price}`;
+      side.appendChild(price);
+      if (mine) {
+        const own = document.createElement('span');
+        own.className = 'auction-own-label';
+        own.textContent = 'ВАШ ЛОТ';
+        side.appendChild(own);
+      } else {
+        const buy = document.createElement('button');
+        buy.className = 'auction-buy';
+        buy.type = 'button';
+        buy.textContent = 'Купить';
+        buy.disabled = !initData;
+        buy.addEventListener('click', () => purchaseAuctionLot(lot, buy));
+        side.appendChild(buy);
+      }
+      card.append(info, side);
+      container.appendChild(card);
+    }
+  }
+  async function loadAuction() {
+    try {
+      const response = await fetch(API_BASE + '/api/auction');
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const data = await response.json();
+      renderAuctionLots(data.lots || []);
+    } catch (error) {
+      const empty = document.createElement('p');
+      empty.className = 'auction-empty';
+      empty.textContent = 'Не удалось загрузить лоты. Нажмите «Обновить».';
+      $('auction-lots').replaceChildren(empty);
+    }
+  }
+  async function createAuctionLot() {
+    const note = $('auction-note');
+    const price = Math.floor(Number($('auction-price').value));
+    if (!initData) { note.textContent = 'Продажа доступна внутри Telegram.'; return; }
+    if (gone) { note.textContent = 'Завершённого персонажа нельзя выставить.'; return; }
+    if (!Number.isInteger(price) || price < 1 || price > 1000000) {
+      note.textContent = 'Укажите цену от 1 до 1 000 000 кристаллов.';
+      return;
+    }
+    const button = $('auction-sell');
+    button.disabled = true;
+    note.textContent = 'Создаём лот…';
+    try {
+      const request = JSON.parse(saveRequestBody());
+      const data = await apiPost('/api/auction/list', { price, stats: request.stats });
+      newSlave();
+      applyPlayerIdentity(data.player);
+      scheduleSave(true);
+      note.textContent = `${slaveDisplayName(data.lot.slave_no)} выставлен за ◆ ${data.lot.price}.`;
+      renderAuctionCurrent();
+      await loadAuction();
+      sfx.gem();
+    } catch (error) {
+      note.textContent = error.message;
+      sfx.deny();
+    } finally {
+      renderAuctionCurrent();
+    }
+  }
+  async function purchaseAuctionLot(lot, button) {
+    const note = $('auction-note');
+    if (!initData) { note.textContent = 'Покупка доступна внутри Telegram.'; return; }
+    const message = `Купить ${slaveDisplayName(lot.slave_no)} за ◆ ${lot.price}? Текущий персонаж будет заменён.`;
+    if (!window.confirm(message)) return;
+    button.disabled = true;
+    note.textContent = 'Подтверждаем покупку…';
+    try {
+      const data = await apiPost('/api/auction/buy', { lot_id: lot.id });
+      restoreProgress(data.player.current_slave_stats, data.player);
+      applyPlayerIdentity(data.player);
+      closeModal('death');
+      closeModal('escape-modal');
+      scheduleSave(true);
+      note.textContent = `${slaveDisplayName(lot.slave_no)} теперь ваш. Возраст и рейтинг перенесены.`;
+      renderAuctionCurrent();
+      await loadAuction();
+      sfx.gem();
+    } catch (error) {
+      note.textContent = error.message;
+      button.disabled = false;
+      sfx.deny();
+    }
+  }
+  $('btn-auction').addEventListener('click', () => {
+    $('auction-note').textContent = initData ? '' : 'Просмотр доступен всем. Покупка и продажа — внутри Telegram.';
+    renderAuctionCurrent();
+    openModal('auction-modal');
+    loadAuction();
+    sfx.coin();
+  });
+  $('auction-sell').addEventListener('click', createAuctionLot);
+  $('auction-refresh').addEventListener('click', loadAuction);
 
   function renderLeaderboardList(id, items, formatValue, formatName = item => item.display_name || 'Игрок') {
     const list = $(id);
@@ -2447,7 +2665,7 @@
       renderLeaderboardList('leaderboard-power', data.power || [], item => {
         const hours = Math.max(0, Math.floor(item.oldest_slave_age_hours || 0));
         return `${Math.floor(hours / 24)} дн. ${hours % 24} ч.`;
-      }, item => `${item.display_name || 'Игрок'} · Подопытный ${String(item.oldest_slave_no || 1).padStart(3, '0')}`);
+      }, item => `${item.display_name || 'Игрок'} · ${slaveDisplayName(item.oldest_slave_no || 1)}`);
     } catch (error) {
       for (const id of ['leaderboard-shame', 'leaderboard-power']) {
         const row = document.createElement('li');
@@ -2564,6 +2782,11 @@
     nicknameChanges = Math.max(0, Math.floor(player.nickname_changes || 0));
     state.coins = player.coins;
     state.gems = player.crystals;
+    if (player.rating_reset_applied) {
+      oldestSlaveAgeDays = 0;
+      oldestSlaveAgeHours = 0;
+      oldestSlaveNo = 1;
+    }
   }
   async function requestNickname(value) {
     const name = normalizedNickname(value);
@@ -2606,7 +2829,7 @@
     }
   });
   async function buyProduct(product) {
-    const note = product === 'vip' ? $('vip-stub') : $('gem-stub');
+    const note = $('gem-stub');
     if (!initData) {
       note.textContent = 'Оплата доступна при запуске игры внутри Telegram.';
       note.classList.add('show');
@@ -2623,8 +2846,18 @@
       sfx.deny();
     }
   }
-  $('btn-vip').addEventListener('click', () => { $('vip-stub').classList.remove('show'); openModal('vip-modal'); });
-  $('vip-pay').addEventListener('click', () => buyProduct('vip'));
+  $('btn-vip').addEventListener('click', () => {
+    $('vip-store-note').textContent = '';
+    openModal('vip-modal');
+    sfx.coin();
+  });
+  document.querySelectorAll('.vip-buy').forEach(button => {
+    button.addEventListener('click', () => {
+      const product = button.closest('.vip-product').querySelector('h3').textContent;
+      $('vip-store-note').textContent = `${product}: оплата будет доступна после подключения ЮKassa.`;
+      sfx.coin();
+    });
+  });
   function openDonate() { $('gem-stub').classList.remove('show'); openModal('gem-modal'); }
   $('btn-gems').addEventListener('click', openDonate);
   document.querySelectorAll('.pack').forEach(p => {
@@ -3016,6 +3249,11 @@
   let oldestSlaveAgeDays = 0;
   let oldestSlaveAgeHours = 0;
   let oldestSlaveNo = 1;
+  function newSlaveUid() {
+    if (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') return globalThis.crypto.randomUUID();
+    return `slave-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+  let slaveUid = newSlaveUid();
   let slaveBornAt = Date.now();
   let slaveEndedAt = null;
   let slaveEndReason = null;
@@ -3042,7 +3280,7 @@
   }
   function snapshot() {
     return {
-      version: 1, slaveNo, state: { ...state }, fetish, rareFetish, spiritBroken, face, onboardingComplete,
+      version: 1, slaveNo, slaveUid, state: { ...state }, fetish, rareFetish, spiritBroken, face, onboardingComplete,
       owned: { ...owned }, ownedOutfits: { ...ownedOutfits }, equipped: { ...equipped },
       ownedProfileCards: { ...ownedProfileCards }, profileCard, displayName, nicknameChanges,
       beltLevel, beltWorn, beltBroken, baseMult,
@@ -3089,7 +3327,14 @@
     if (saveInFlight) { saveAgain = true; return; }
     saveInFlight = true;
     try {
+      const requestedCoins = Math.floor(state.coins);
+      const requestedGems = Math.floor(state.gems);
       const player = await postProgress('/api/save_data');
+      const coinDelta = Math.floor(state.coins) - requestedCoins;
+      const gemDelta = Math.floor(state.gems) - requestedGems;
+      applyPlayerIdentity(player);
+      state.coins += coinDelta;
+      state.gems += gemDelta;
       slavesKilled = Math.max(slavesKilled, player.slaves_killed || 0);
       oldestSlaveAgeDays = Math.max(oldestSlaveAgeDays, player.oldest_slave_age_days || 0);
       const serverOldestHours = Math.max(player.oldest_slave_age_hours || 0, (player.oldest_slave_age_days || 0) * 24);
@@ -3097,6 +3342,7 @@
         oldestSlaveAgeHours = serverOldestHours;
         oldestSlaveNo = Math.max(1, Math.floor(player.oldest_slave_no || 1));
       }
+      render();
     } catch (error) {
       console.warn('Не удалось сохранить прогресс:', error);
     } finally {
@@ -3120,6 +3366,7 @@
       }
     }
     slaveNo = Number.isFinite(saved.slaveNo) ? Math.max(1, Math.floor(saved.slaveNo)) : slaveNo;
+    slaveUid = typeof saved.slaveUid === 'string' && saved.slaveUid.length <= 80 ? saved.slaveUid : newSlaveUid();
     if ([...FETISHES, ...SECRET_FETISHES].includes(saved.fetish)) fetish = saved.fetish;
     if (FACE_FX[saved.face]) face = saved.face;
     rareFetish = !!saved.rareFetish;
@@ -3156,7 +3403,7 @@
     if (isObject(saved.quest) && QUEST_POOL.some(q => q.id === saved.quest.id)) quest = saved.quest;
     if (isObject(saved.weekly) && Array.isArray(saved.weekly.quests)) weekly = saved.weekly;
     if (saved.mquest === null || (isObject(saved.mquest) && MQUEST_POOL.some(q => q.id === saved.mquest.id))) mquest = saved.mquest;
-    mistressLevel = Math.max(0, Math.min(MISTRESS.length - 1, Math.floor(saved.mistressLevel) || 0));
+    if (Number.isFinite(saved.mistressLevel)) mistressLevel = Math.max(0, Math.min(MISTRESS.length - 1, Math.floor(saved.mistressLevel)));
     if (isObject(saved.slaveBody) && Number.isFinite(saved.slaveBody.h) && Number.isFinite(saved.slaveBody.w)) slaveBody = { ...saved.slaveBody };
     if (isObject(saved.junk)) junk = { ...saved.junk };
     if (isObject(saved.artifacts)) artifacts = { ...artifacts, ...saved.artifacts };
@@ -3165,7 +3412,9 @@
     slaveBornAt = Number.isFinite(saved.slaveBornAt) ? Math.min(Date.now(), saved.slaveBornAt) : Date.now();
     slaveEndedAt = Number.isFinite(saved.slaveEndedAt) ? saved.slaveEndedAt : null;
     slaveEndReason = ['death', 'escape'].includes(saved.slaveEndReason) ? saved.slaveEndReason : null;
-    slavesKilled = Math.max(Math.floor(saved.slavesKilled) || 0, player ? player.slaves_killed || 0 : 0);
+    slavesKilled = player
+      ? Math.max(slavesKilled, Math.floor(player.slaves_killed) || 0)
+      : Math.max(Math.floor(saved.slavesKilled) || 0, slavesKilled);
     oldestSlaveAgeDays = Math.max(Math.floor(saved.oldestSlaveAgeDays) || 0, player ? player.oldest_slave_age_days || 0 : 0);
     const savedOldestHours = Math.max(Math.floor(saved.oldestSlaveAgeHours) || 0, (Math.floor(saved.oldestSlaveAgeDays) || 0) * 24);
     const serverOldestHours = player ? Math.max(player.oldest_slave_age_hours || 0, (player.oldest_slave_age_days || 0) * 24) : 0;
@@ -3179,7 +3428,7 @@
     trashRefillAt = Math.max(0, saved.trashRefillAt || 0);
 
     $('slave-no').textContent = padNo();
-    $('scene-slave-tag').textContent = 'Подопытный ' + padNo();
+    $('scene-slave-tag').textContent = slaveDisplayName();
     for (const item of ['collar', 'gag', 'gear-whip']) $(item).setAttribute('opacity', owned[item] ? 1 : 0);
     for (const key of ['handcuffs', 'shackles']) $(key).setAttribute('opacity', restraints[key] ? 1 : 0);
     $('face-haggard').setAttribute('opacity', face === 'haggard' ? 1 : 0);
@@ -3247,7 +3496,7 @@
   applyMistress();
   applyBody();
   opLabel();
-  render();
+  applyCensorship();
   loadSavedProgress();
 
   // отладочный доступ для тестов

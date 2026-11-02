@@ -82,6 +82,12 @@ def init_database() -> None:
             "ALTER TABLE players ADD COLUMN IF NOT EXISTS referred_by BIGINT REFERENCES players(id)"
         )
         connection.execute(
+            "ALTER TABLE players ADD COLUMN IF NOT EXISTS pending_crystals INTEGER NOT NULL DEFAULT 0"
+        )
+        connection.execute(
+            "ALTER TABLE players ADD COLUMN IF NOT EXISTS rating_reset_pending BOOLEAN NOT NULL DEFAULT FALSE"
+        )
+        connection.execute(
             "UPDATE players SET oldest_slave_age_hours = oldest_slave_age_days * 24 WHERE oldest_slave_age_hours = 0 AND oldest_slave_age_days > 0"
         )
         connection.execute(
@@ -98,6 +104,35 @@ def init_database() -> None:
             """
         )
         connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS auction_lots (
+                id BIGSERIAL PRIMARY KEY,
+                seller_id BIGINT NOT NULL REFERENCES players(id),
+                buyer_id BIGINT REFERENCES players(id),
+                slave_uid TEXT NOT NULL,
+                slave_name TEXT NOT NULL,
+                slave_no INTEGER NOT NULL,
+                slave_level INTEGER NOT NULL,
+                fetish TEXT NOT NULL,
+                price INTEGER NOT NULL CHECK (price > 0),
+                slave_stats TEXT NOT NULL,
+                age_hours INTEGER NOT NULL DEFAULT 0,
+                status TEXT NOT NULL DEFAULT 'active',
+                created_at TEXT NOT NULL,
+                sold_at TEXT
+            )
+            """
+        )
+        connection.execute(
             "CREATE INDEX IF NOT EXISTS players_referred_by_idx ON players (referred_by)"
+        )
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS auction_lots_active_idx ON auction_lots (status, created_at DESC)"
+        )
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS auction_lots_slave_idx ON auction_lots (seller_id, slave_uid, id DESC)"
+        )
+        connection.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS auction_lots_one_active_idx ON auction_lots (seller_id) WHERE status = 'active'"
         )
         connection.commit()
