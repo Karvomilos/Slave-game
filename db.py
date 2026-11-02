@@ -62,7 +62,9 @@ def init_database() -> None:
                 oldest_slave_age_days INTEGER NOT NULL DEFAULT 0,
                 oldest_slave_age_hours INTEGER NOT NULL DEFAULT 0,
                 oldest_slave_no INTEGER NOT NULL DEFAULT 1,
-                referred_by BIGINT REFERENCES players(id)
+                referred_by BIGINT REFERENCES players(id),
+                last_seen TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                last_offline_tick TIMESTAMPTZ
             )
             """
         )
@@ -86,6 +88,15 @@ def init_database() -> None:
         )
         connection.execute(
             "ALTER TABLE players ADD COLUMN IF NOT EXISTS rating_reset_pending BOOLEAN NOT NULL DEFAULT FALSE"
+        )
+        connection.execute(
+            "ALTER TABLE players ADD COLUMN IF NOT EXISTS last_seen TIMESTAMPTZ NOT NULL DEFAULT NOW()"
+        )
+        connection.execute(
+            "ALTER TABLE players ADD COLUMN IF NOT EXISTS last_offline_tick TIMESTAMPTZ"
+        )
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS players_last_seen_idx ON players (last_seen)"
         )
         connection.execute(
             "UPDATE players SET oldest_slave_age_hours = oldest_slave_age_days * 24 WHERE oldest_slave_age_hours = 0 AND oldest_slave_age_days > 0"

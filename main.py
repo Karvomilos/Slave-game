@@ -9,10 +9,10 @@ from typing import Any, Literal
 from urllib.parse import urlencode, urlsplit, urlunsplit
 
 import httpx
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, F
 from aiogram.exceptions import TelegramRetryAfter
 from aiogram.filters import CommandStart
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -79,11 +79,15 @@ def username_for(user) -> str:
     return user.get("username") or user.get("first_name") or f"player_{user['id']}"
 
 
-def player_dict(row: Any) -> dict[str, Any]:
+def parse_snapshot(value: Any) -> dict[str, Any]:
     try:
-        current_stats = json.loads(row["current_slave_stats"])
+        snapshot = json.loads(value or "{}")
     except (TypeError, json.JSONDecodeError):
-        current_stats = {}
+        return {}
+    return snapshot if isinstance(snapshot, dict) else {}
+
+
+def player_dict(row: Any) -> dict[str, Any]:
     return {
         "id": row["id"],
         "username": row["username"],
@@ -92,12 +96,13 @@ def player_dict(row: Any) -> dict[str, Any]:
         "coins": row["coins"],
         "crystals": row["crystals"],
         "slaves_killed": row["slaves_killed"],
-        "current_slave_stats": current_stats,
+        "current_slave_stats": parse_snapshot(row["current_slave_stats"]),
         "vip_status": bool(row["vip_status"]),
         "oldest_slave_age_days": row["oldest_slave_age_days"],
         "oldest_slave_age_hours": row["oldest_slave_age_hours"],
         "oldest_slave_no": row["oldest_slave_no"],
         "referred_by": row["referred_by"],
+        "last_seen": row["last_seen"].isoformat() if row["last_seen"] else None,
     }
 
 
@@ -109,6 +114,75 @@ def snapshot_age_hours(snapshot: dict[str, Any]) -> int:
     if not isinstance(ended_at, (int, float)):
         ended_at = datetime.now(timezone.utc).timestamp() * 1000
     return max(0, int((ended_at - born_at) / 3_600_000))
+
+
+def apply_offline_tick(snapshot: dict[str, Any], now: datetime) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    if not snapshot.get("slaveUid") or snapshot.get("gone") or not isinstance(snapshot.get("state"), dict):
+        return snapshot, None
+    updated = dict(snapshot)
+    state = dict(snapshot["state"])
+    artifacts = dict(snapshot.get("artifacts") or {})
+    equipped = snapshot.get("equipped") or {}
+    damage = max(1, round(12 * (0.55 if equipped.get("body") == "muscle" else 1)))
+    mood_loss = 3 if artifacts.get("ratking") else 4
+    old_mood = float(state.get("mood") or 0)
+    old_dignity = float(state.get("dignity") or 0)
+    state["hp"] = max(0, float(state.get("hp") or 0) - damage)
+    state["mood"] = max(0, old_mood - mood_loss)
+    comfort = sum(
+        value for value in (snapshot.get("room") or {}).values()
+        if isinstance(value, (int, float))
+    )
+    dignity_loss = 0
+    if state["mood"] <= 0 and old_dignity > 0:
+        dignity_loss = max(1, round(8 * max(0.25, 1 - comfort * 0.05)))
+        state["dignity"] = max(0, old_dignity - dignity_loss)
+    pride_used = False
+    if state["dignity"] <= 0 and artifacts.get("pride"):
+        artifacts["pride"] = False
+        updated["spiritBroken"] = False
+        state["dignity"] = 30
+        pride_used = True
+    elif state["dignity"] <= 0:
+        updated["spiritBroken"] = True
+    died = state["hp"] <= 0
+    if died:
+        updated["gone"] = True
+        updated["slaveEndReason"] = "death"
+        updated["slaveEndedAt"] = int(now.timestamp() * 1000)
+        updated["slavesKilled"] = int(snapshot.get("slavesKilled") or 0) + 1
+        updated["oldestSlaveAgeDays"] = 0
+        updated["oldestSlaveAgeHours"] = 0
+        updated["oldestSlaveNo"] = int(snapshot.get("slaveNo") or 1) + 1
+    updated["state"] = state
+    updated["artifacts"] = artifacts
+    event = {
+        "damage": damage,
+        "mood_loss": old_mood - state["mood"],
+        "dignity_loss": old_dignity - state["dignity"] if not pride_used else 0,
+        "pride_used": pride_used,
+        "died": died,
+        "hp": state["hp"],
+        "mood": state["mood"],
+        "dignity": state["dignity"],
+    }
+    return updated, event
+
+
+def player_status_text(row: Any) -> str:
+    snapshot = parse_snapshot(row["current_slave_stats"])
+    state = snapshot.get("state") or {}
+    slave_no = snapshot.get("slaveNo") if isinstance(snapshot.get("slaveNo"), int) else 1
+    if not snapshot:
+        return "Игровой персонаж ещё не создан. Нажмите «Воспитать», чтобы начать."
+    status = "погиб" if snapshot.get("gone") and snapshot.get("slaveEndReason") == "death" else "сбежал" if snapshot.get("gone") else "жив"
+    return (
+        f"Подопытный {slave_no:03d} · {status}\n"
+        f"Здоровье: {round(float(state.get('hp') or 0))}/100\n"
+        f"Сытость: {round(float(state.get('food') or 0))}/100\n"
+        f"Настроение: {round(float(state.get('mood') or 0))}/100\n"
+        f"Достоинство: {round(float(state.get('dignity') or 0))}/100"
+    )
 
 
 def snapshot_level(snapshot: dict[str, Any]) -> int:
@@ -207,6 +281,20 @@ class PaymentNotification(BaseModel):
 dp = Dispatcher()
 
 
+def game_keyboard(referrer_id: int | None = None) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="Воспитать",
+                    web_app=WebAppInfo(url=game_url_with_referral(referrer_id)),
+                ),
+                InlineKeyboardButton(text="Показатели", callback_data="status"),
+            ]
+        ]
+    )
+
+
 @dp.message(CommandStart())
 async def start(message: Message) -> None:
     global bot_username
@@ -214,20 +302,22 @@ async def start(message: Message) -> None:
     bot_username = me.username or bot_username
     argument = (message.text or "").partition(" ")[2]
     referrer_id = int(argument[4:]) if argument.startswith("ref_") and argument[4:].isdigit() else None
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="Воспитать",
-                    web_app=WebAppInfo(url=game_url_with_referral(referrer_id)),
-                )
-            ]
-        ]
-    )
     await message.answer(
         "Я Ваш виртуальный слуга, крупно желающий стать рыцарем. Мне нужно чуть-чуть дисциплины..",
-        reply_markup=keyboard,
+        reply_markup=game_keyboard(referrer_id),
     )
+
+
+@dp.callback_query(F.data == "status")
+async def show_status(callback: CallbackQuery) -> None:
+    with database() as connection:
+        row = connection.execute(
+            "SELECT * FROM players WHERE id = ?", (callback.from_user.id,)
+        ).fetchone()
+    text = player_status_text(row) if row else "Игровой профиль ещё не создан. Нажмите «Воспитать», чтобы начать."
+    if callback.message:
+        await callback.message.answer(text, reply_markup=game_keyboard())
+    await callback.answer()
 
 
 async def run_bot() -> None:
@@ -273,12 +363,91 @@ async def keep_render_awake() -> None:
                 logging.warning("Keepalive-запрос Render не выполнен: %s", error)
 
 
+def collect_offline_events(now: datetime | None = None) -> list[dict[str, Any]]:
+    now = now or datetime.now(timezone.utc)
+    events = []
+    with database() as connection:
+        candidates = connection.execute(
+            """
+            SELECT id FROM players
+            WHERE last_seen <= NOW() - INTERVAL '1 hour'
+              AND (last_offline_tick IS NULL OR last_offline_tick <= NOW() - INTERVAL '1 hour')
+            ORDER BY last_seen ASC LIMIT 500
+            """
+        ).fetchall()
+        for candidate in candidates:
+            row = connection.execute(
+                "SELECT * FROM players WHERE id = ? FOR UPDATE", (candidate["id"],)
+            ).fetchone()
+            last_seen = row["last_seen"].replace(tzinfo=row["last_seen"].tzinfo or timezone.utc)
+            last_tick = row["last_offline_tick"] or last_seen
+            last_tick = last_tick.replace(tzinfo=last_tick.tzinfo or timezone.utc)
+            if (now - last_seen).total_seconds() < 3600 or (now - last_tick).total_seconds() < 3600:
+                continue
+            snapshot = parse_snapshot(row["current_slave_stats"])
+            updated, event = apply_offline_tick(snapshot, now)
+            if event is None:
+                continue
+            slave_no = updated.get("slaveNo") if isinstance(updated.get("slaveNo"), int) else row["oldest_slave_no"]
+            age_hours = 0 if event["died"] else snapshot_age_hours(updated)
+            rating_no = slave_no + 1 if event["died"] else slave_no
+            slaves_killed = row["slaves_killed"] + (1 if event["died"] else 0)
+            connection.execute(
+                """
+                UPDATE players
+                SET current_slave_stats = ?, last_offline_tick = ?, slaves_killed = ?,
+                    oldest_slave_age_days = ?, oldest_slave_age_hours = ?, oldest_slave_no = ?
+                WHERE id = ?
+                """,
+                (
+                    json.dumps(updated, ensure_ascii=False), now, slaves_killed,
+                    age_hours // 24, age_hours, rating_no, row["id"],
+                ),
+            )
+            connection.commit()
+            lines = [f"Подопытный {slave_no:03d}: здоровье −{event['damage']} за час отсутствия."]
+            if event["dignity_loss"] > 0:
+                lines.append(f"Достоинство −{event['dignity_loss']}.")
+            if event["pride_used"]:
+                lines.append("Похороненная гордость сработала: достоинство восстановлено до 30.")
+            if event["died"]:
+                lines.append("Здоровье достигло нуля. Подопытный погиб; его место в комнате власти очищено.")
+            else:
+                lines.append(
+                    f"Сейчас: HP {round(event['hp'])}, настроение {round(event['mood'])}, "
+                    f"достоинство {round(event['dignity'])}."
+                )
+            events.append({"user_id": row["id"], "text": "\n".join(lines)})
+    return events
+
+
+async def offline_notifications() -> None:
+    bot = Bot(token=get_bot_token())
+    try:
+        while True:
+            await asyncio.sleep(60)
+            try:
+                events = await asyncio.to_thread(collect_offline_events)
+                for event in events:
+                    try:
+                        await bot.send_message(event["user_id"], event["text"], reply_markup=game_keyboard())
+                    except Exception as error:
+                        logging.warning("Не удалось уведомить игрока %s: %s", event["user_id"], error)
+                    await asyncio.sleep(0.05)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                logging.exception("Ошибка почасовой обработки офлайн-игроков")
+    finally:
+        await bot.session.close()
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     init_database()
     tasks = [asyncio.create_task(keep_render_awake())]
     if os.getenv("RUN_BOT", "1").lower() not in {"0", "false", "no"}:
-        tasks.append(asyncio.create_task(run_bot()))
+        tasks.extend([asyncio.create_task(run_bot()), asyncio.create_task(offline_notifications())])
     try:
         yield
     finally:
@@ -334,7 +503,7 @@ def load_data(request: LoadRequest) -> dict[str, Any]:
                 )
         else:
             connection.execute(
-                "UPDATE players SET username = ?, pending_crystals = 0, rating_reset_pending = FALSE WHERE id = ?",
+                "UPDATE players SET username = ?, pending_crystals = 0, rating_reset_pending = FALSE, last_seen = NOW() WHERE id = ?",
                 (username, user["id"]),
             )
         connection.commit()
@@ -392,7 +561,7 @@ def save_data(request: SaveRequest) -> dict[str, Any]:
             """
             UPDATE players
             SET username = ?, coins = ?, crystals = ?, pending_crystals = 0, slaves_killed = ?,
-                current_slave_stats = ?, vip_status = ?, rating_reset_pending = FALSE,
+                current_slave_stats = ?, vip_status = ?, rating_reset_pending = FALSE, last_seen = NOW(),
                 oldest_slave_age_days = ?, oldest_slave_no = ?, oldest_slave_age_hours = ?
             WHERE id = ?
             """,
@@ -453,12 +622,28 @@ def referral(request: LoadRequest) -> dict[str, Any]:
         invited = connection.execute(
             "SELECT COUNT(*) AS count FROM players WHERE referred_by = ?", (user["id"],)
         ).fetchone()["count"]
+        friends = connection.execute(
+            """
+            SELECT display_name, last_seen FROM players
+            WHERE referred_by = ? OR id = (SELECT referred_by FROM players WHERE id = ?)
+            ORDER BY last_seen DESC LIMIT 50
+            """,
+            (user["id"], user["id"]),
+        ).fetchall()
+        connection.execute("UPDATE players SET last_seen = NOW() WHERE id = ?", (user["id"],))
         connection.commit()
     return {
         "url": f"https://t.me/{bot_username}?start=ref_{user['id']}",
         "invited": invited,
         "referrer_reward": REFERRER_REWARD,
         "player_reward": REFERRED_PLAYER_REWARD,
+        "friends": [
+            {
+                "display_name": row["display_name"] or "Игрок",
+                "last_seen": row["last_seen"].isoformat() if row["last_seen"] else None,
+            }
+            for row in friends
+        ],
     }
 
 

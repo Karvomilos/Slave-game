@@ -335,6 +335,27 @@
         <circle cx="344" cy="214" r="2" fill="#4a3238"/>
         <path d="M332 205 q3 -7 0 -13 M346 203 q3 -7 0 -13" fill="none" stroke="rgba(143,216,255,0.14)" stroke-width="1.4"/>
       </g>
+
+      <g id="rat-family" opacity="0">
+        <g transform="translate(42 240)"><g class="rat rat-1">
+          <path d="M-9 2 Q-20 -5 -23 3 Q-25 8 -18 8" fill="none" stroke="#8a7670" stroke-width="1.6"/>
+          <ellipse cx="0" cy="0" rx="11" ry="6" fill="#71645f"/><circle cx="9" cy="-3" r="5" fill="#82736c"/>
+          <circle cx="7" cy="-8" r="2.8" fill="#a38d84"/><circle cx="11" cy="-3" r="1" fill="#111"/>
+          <path d="M13 -1 l4 1" stroke="#d2b8aa" stroke-width="1"/><circle class="rat-crumb" cx="18" cy="1" r="2" fill="#d9b76a"/>
+        </g></g>
+        <g transform="translate(292 250)"><g class="rat rat-2">
+          <path d="M-9 2 Q-20 -4 -23 4" fill="none" stroke="#79634f" stroke-width="1.6"/>
+          <ellipse cx="0" cy="0" rx="11" ry="6" fill="#675446"/><circle cx="9" cy="-3" r="5" fill="#806b55"/>
+          <circle cx="7" cy="-8" r="2.8" fill="#aa8d70"/><circle cx="11" cy="-3" r="1" fill="#111"/>
+          <path d="M13 -1 l4 1" stroke="#d2b8aa" stroke-width="1"/><circle class="rat-crumb" cx="18" cy="1" r="2" fill="#d9b76a"/>
+        </g></g>
+        <g transform="translate(105 270)"><g class="rat rat-3">
+          <path d="M-9 2 Q-20 -5 -23 3 Q-25 8 -18 8" fill="none" stroke="#9b8d80" stroke-width="1.6"/>
+          <ellipse cx="0" cy="0" rx="11" ry="6" fill="#8b7e72"/><circle cx="9" cy="-3" r="5" fill="#a29486"/>
+          <circle cx="7" cy="-8" r="2.8" fill="#c0ad9c"/><circle cx="11" cy="-3" r="1" fill="#111"/>
+          <path d="M13 -1 l4 1" stroke="#e1cbb9" stroke-width="1"/><circle class="rat-crumb" cx="18" cy="1" r="2" fill="#d9b76a"/>
+        </g></g>
+      </g>
     </svg>
     <div class="halo"></div>
     <div class="floor"></div>
@@ -1405,6 +1426,7 @@
     <input class="referral-link" id="referral-link" type="text" readonly aria-label="Реферальная ссылка">
     <button class="big-btn" id="btn-copy-referral">Скопировать ссылку</button>
     <p class="sub" id="referral-stats">Приглашено: 0</p>
+    <div class="referral-friends" id="referral-friends" aria-live="polite"></div>
     <p class="stub-note" id="referral-stub"></p>
   </div>
 </div>

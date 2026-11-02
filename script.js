@@ -885,6 +885,7 @@
     }
     $('v-coins').textContent = state.coins;
     $('v-gems').textContent = state.gems;
+    $('rat-family').setAttribute('opacity', artifacts.ratking ? 1 : 0);
 
     const m = totalMult();
     $('v-tribute').textContent = Math.round(100 * m);
@@ -2174,13 +2175,13 @@
     { id: 'gag',       name: 'Кляп',      golden: false, need: { apple: 1, rag: 2 },         desc: 'Чтобы помалкивал' },
     { id: 'pride',     name: 'Похороненная гордость', golden: true, need: { glass: 1, rag: 1, spoon: 1 }, desc: 'Спасает дух: достоинство с нуля поднимется до 30 — даже после слома. Расходуется' },
     { id: 'amulet',    name: 'Вшивый амулет',       golden: true, need: { can: 1, nail: 1, wire: 1 },     desc: '+0.35 к дани. Ношение вшами не считается браком' },
-    { id: 'ratking',   name: 'Крысиный король',     golden: true, need: { tail: 2, apple: 1 },            desc: 'Сытость тает на 30% медленнее: крысы носят крошки' },
+    { id: 'ratking',   name: 'Крысиный король',     golden: true, need: { tail: 2, apple: 1 },            desc: 'Три крысы бегают по комнате и приносят крошки: настроение растёт, сытость не меняется' },
     { id: 'eye',       name: 'Стеклянный глаз',     golden: true, need: { glass: 1, battery: 1, wire: 1 }, desc: 'Шанс клятвы при потакании ×3' }
   ];
   const CRAFT_SAY = {
     pride:   'Он сжал стекляшку, как сердце. Гордость найдена на помойке — а где ж ещё.',
     amulet:  'Амулет из банки. Экономика чудес не признаёт, но уважает.',
-    ratking: 'Крысиный король коронован. Крошки теперь идут ко мне.',
+    ratking: 'Крысиный король коронован. Три маленьких поставщика крошек уже в пути.',
     eye:     'Третий глаз. Стеклянный. Видит клятвы насквозь.'
   };
   const hasMats = r => Object.entries(r.need).every(([k, v]) => (junk[k] || 0) >= v);
@@ -2863,6 +2864,37 @@
   document.querySelectorAll('.pack').forEach(p => {
     p.addEventListener('click', () => buyProduct('gems_' + p.dataset.pack));
   });
+  function lastActivityLabel(value) {
+    const timestamp = Date.parse(value || '');
+    if (!Number.isFinite(timestamp)) return 'нет данных';
+    const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
+    if (minutes < 2) return 'сейчас в игре';
+    if (minutes < 60) return `${minutes} мин. назад`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 48) return `${hours} ч. назад`;
+    return `${Math.floor(hours / 24)} дн. назад`;
+  }
+  function renderReferralFriends(friends) {
+    const host = $('referral-friends');
+    host.replaceChildren();
+    if (!friends.length) {
+      const empty = document.createElement('p');
+      empty.className = 'referral-friends-empty';
+      empty.textContent = 'Приглашённых игроков пока нет.';
+      host.appendChild(empty);
+      return;
+    }
+    for (const friend of friends) {
+      const row = document.createElement('div');
+      row.className = 'referral-friend';
+      const name = document.createElement('span');
+      name.textContent = friend.display_name || 'Игрок';
+      const activity = document.createElement('span');
+      activity.textContent = lastActivityLabel(friend.last_seen);
+      row.append(name, activity);
+      host.appendChild(row);
+    }
+  }
   $('btn-referral').addEventListener('click', async () => {
     openModal('referral-modal');
     $('referral-stub').classList.remove('show');
@@ -2870,6 +2902,7 @@
       const data = await apiPost('/api/referral', {});
       $('referral-link').value = data.url;
       $('referral-stats').textContent = `Приглашено: ${data.invited}. Вам начислено: ${data.invited * data.referrer_reward} клятв.`;
+      renderReferralFriends(data.friends || []);
     } catch (error) {
       $('referral-stub').textContent = initData ? error.message : 'Реферальные ссылки доступны внутри Telegram.';
       $('referral-stub').classList.add('show');
@@ -2955,9 +2988,12 @@
   /* ---------- тики ---------- */
   setInterval(() => {
     if (!onboardingComplete || gone) return;
-    state.food -= (owned.gag ? 0.9 : 0.6) * (typeof artifacts !== 'undefined' && artifacts.ratking ? 0.7 : 1); // с кляпом ест на бегу — сытость тает быстрее; крысиный король носит крошки
+    state.food -= owned.gag ? 0.9 : 0.6; // с кляпом ест на бегу — сытость тает быстрее
     state.mood -= 0.4;
-    if (state.mood < 40) state.dignity -= 0.15; // достоинство тает лишь на фоне хандры
+    if (state.mood < 40) {
+      const comfortFactor = state.mood <= 0 ? Math.max(0.25, 1 - comfort * 0.05) : 1;
+      state.dignity -= 0.15 * comfortFactor;
+    }
     state.fear = Math.max(0, state.fear - 0.3);
     state.aggr = Math.max(0, state.aggr - 1.2);
     // показатели не уходят в минус
@@ -3029,6 +3065,19 @@
     render();
   }, 1500);
   setInterval(() => {
+    if (!onboardingComplete || gone || !artifacts.ratking) return;
+    state.mood = Math.min(100, state.mood + 3);
+    if (Math.random() < 0.35) {
+      say(pick([
+        'Три крысы притащили крошки. Еды не хватит, но компания приятная.',
+        'Крысиная делегация оставила крошку рядом с подопытным. Он почти улыбается.',
+        'Крысы весело снуют по комнате. Настроение +3, сытость прежняя.',
+      ]));
+    }
+    render();
+    scheduleSave();
+  }, 12000);
+  setInterval(() => {
     if (!onboardingComplete || gone || bubble.classList.contains('show')) return;
     const pool = comfort >= 10 ? phrases.idleRich : comfort >= 4 ? phrases.idle : phrases.idlePoor;
     say(pick(pool));
@@ -3063,9 +3112,9 @@
 
   /* ---------- справка по параметрам ---------- */
   const STAT_INFO = {
-    hp:      { t: 'HP — здоровье', d: 'Достигнет нуля — подопытный мёртв. Смерть обнуляет всю обстановку комнаты. Лечится кормёжкой (слабо) и медленно сам при сытости выше 30.', up: '▲ Покормить (+5), сытость > 30 (+0.2/тик)', down: '▼ Ударить (−5), Выпороть (−5), Пнуть (−7). Склонность «Боль»: весь урон ×1.5' },
+    hp:      { t: 'HP — здоровье', d: 'Достигнет нуля — подопытный мёртв. Смерть обнуляет всю обстановку комнаты. Лечится кормёжкой (слабо) и медленно сам при сытости выше 30.', up: '▲ Покормить (+5), сытость > 30 (+0.2/тик)', down: '▼ Ударить (−5), Выпороть (−5), Пнуть (−7), каждый час отсутствия (−12, тело снижает урон). Склонность «Боль»: весь урон ×1.5' },
     food:    { t: 'Сытость', d: 'Голодный подопытный не лечится. Ниже 30 регенерация HP останавливается. ПЕРЕКОРМ: кормить при сытости выше 85 — вредно: здоровье −4, настроение −5, достоинство −2, агрессия +6.', up: '▲ Покормить (+14)', down: '▼ Таит со временем (−0.6/тик), Ударить (−4). Перекорм бьёт по здоровью' },
-    mood:    { t: 'Настроение', d: 'Определяет лицо и реплики. Низкое настроение вместе с низким достоинством делает его злым.', up: '▲ Потакание, Покормить (+3), клик по подопытному (+2)', down: '▼ Таит со временем (−0.4/тик), Ударить (−14), Унизить (−8). Склонность «Футфетиш»: тает вдвое быстрее' },
+    mood:    { t: 'Настроение', d: 'Определяет лицо и реплики. Низкое настроение вместе с низким достоинством делает его злым.', up: '▲ Потакание, Покормить (+3), клик по подопытному (+2), крысы с крошками (+3)', down: '▼ Таит со временем (−0.4/тик), Ударить (−14), Унизить (−8). Склонность «Футфетиш»: тает вдвое быстрее' },
     dignity: { t: 'Достоинство — цена труда', d: 'Пока достоинство живо, порка приносит премию: до ×1.5 к монетам. Если упадёт до нуля — дух сломлен НАВСЕГДА: раб остаётся на коленях, дань режется до ×0.5, и вернуть достоинство уже нельзя. Низкое достоинство видно: он заросший и неухоженный. Бритва (+20) приводит его в порядок, но лезвие может порезать — порезы оставляют шрамы навсегда.', up: '▲ Бритва (+20, расходник 30 монет), роскошная обстановка (комфорт ≥ 4: +0.15/тик), Покормить (+4), оковы на склонности «Оковы»', down: '▼ Унизить (−15), Выпороть (−8), перекорм (−2), тает со временем только при настроении ниже 40 (−0.15/тик). Потакание при склонности «Унижение» (−6)' },
     fear:    { t: 'Страх', d: 'Держит подопытного в напряжении. Сам по себе не вредит, но высокая агрессия на фоне страха ведёт к бунту.', up: '▲ Ударить (+10), Пнуть (+15), Выпороть (+6)', down: '▼ Таит со временем (−0.3/тик)' },
     obed:    { t: 'Послушание', d: 'Показатель контроля. Растёт от потакания и унижения.', up: '▲ Потакание (+12…+22, зависит от склонности), Унизить (+6)', down: '▼ Ударить (−3), Пнуть (−8), оковы на склонности «Оковы» (−0.3/тик)' },

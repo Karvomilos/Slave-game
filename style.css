@@ -127,6 +127,32 @@
   body.lux .halo { background: radial-gradient(circle, rgba(255,215,94,0.14), transparent 62%); }
   .room { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; transition: filter 0.8s ease; }
   .room .tier { transition: opacity 0.6s ease; }
+  #rat-family { pointer-events: none; transition: opacity 0.5s ease; }
+  .rat { transform-box: fill-box; transform-origin: center; animation: rat-run-1 8s ease-in-out infinite; }
+  .rat-2 { animation-name: rat-run-2; animation-duration: 10s; animation-delay: -3s; }
+  .rat-3 { animation-name: rat-run-3; animation-duration: 9s; animation-delay: -5s; }
+  .rat-crumb { animation: crumb-hop 0.8s ease-in-out infinite alternate; }
+  @keyframes rat-run-1 {
+    0%, 100% { transform: translate(0, 0); }
+    22% { transform: translate(38px, -5px); }
+    48% { transform: translate(142px, 1px); }
+    55% { transform: translate(142px, -6px); }
+    78% { transform: translate(45px, 0); }
+  }
+  @keyframes rat-run-2 {
+    0%, 100% { transform: translate(0, 0) scaleX(-1); }
+    30% { transform: translate(-52px, -4px) scaleX(-1); }
+    52% { transform: translate(-96px, 0) scaleX(-1); }
+    65% { transform: translate(-82px, -7px) scaleX(-1); }
+  }
+  @keyframes rat-run-3 {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(45px, -6px); }
+    50% { transform: translate(102px, -2px); }
+    62% { transform: translate(102px, -9px); }
+    82% { transform: translate(30px, 0); }
+  }
+  @keyframes crumb-hop { to { transform: translateY(-2px); } }
   .floor {
     position: absolute; bottom: 6%; width: min(42vmin, 340px); height: 1px;
     background: linear-gradient(90deg, transparent, var(--red-dim), transparent);
@@ -413,6 +439,12 @@
   .stub-note.show { opacity: 1; }
   .referral-link { width: 100%; margin: 4px 0 12px; padding: 12px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 11px 'JetBrains Mono', monospace; user-select: text; -webkit-user-select: text; }
   #referral-stats { margin-top: 14px; }
+  .referral-friends { display: grid; gap: 6px; max-height: 190px; margin-top: 14px; overflow-y: auto; text-align: left; }
+  .referral-friends:empty { display: none; }
+  .referral-friend { display: flex; justify-content: space-between; gap: 14px; padding: 9px 10px; border: 1px solid var(--line); background: var(--surface-2); font-size: 10px; }
+  .referral-friend span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .referral-friend span:last-child { flex-shrink: 0; color: var(--gem); }
+  .referral-friends-empty { padding: 10px; color: var(--muted); text-align: center; font-size: 10px; }
 
   .nickname-field { display: grid; gap: 7px; margin: 16px 0; color: var(--muted); font-size: 11px; text-align: left; }
   .nickname-field input {
@@ -872,5 +904,9 @@
       transition: transform 0.5s var(--ease-out) !important;
     }
     .pet.fallen { transition: transform 0.3s ease-in !important; }
+    .rat-1 { animation: rat-run-1 8s ease-in-out infinite !important; }
+    .rat-2 { animation: rat-run-2 10s ease-in-out -3s infinite !important; }
+    .rat-3 { animation: rat-run-3 9s ease-in-out -5s infinite !important; }
+    .rat-crumb { animation: crumb-hop 0.8s ease-in-out infinite alternate !important; }
     .particle, .hearts, .mg-float, .mgt-shine { display: none !important; }
   }
