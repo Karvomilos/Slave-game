@@ -831,8 +831,8 @@
   }
   .heaven-board .q-h { color: #8c6715; text-shadow: 0 1px 0 #fff; }
   .heaven-board .sub {
-    padding: 8px 10px; border-left: 3px solid #a57916; background: rgba(255,250,229,0.88);
-    color: #2f1e06; font-weight: 700;
+    padding: 8px 10px; border-left: 3px solid #e4b94f; background: rgba(45,29,5,0.94);
+    color: #fff4c7; font-weight: 700;
   }
   .heaven-board .leaderboard-list li.empty { color: #49320f; font-weight: 700; }
   .heaven-board .leaderboard-list li { border-color: rgba(140,103,21,0.24); }
