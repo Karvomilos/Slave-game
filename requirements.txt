@@ -1,0 +1,6 @@
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+aiogram==3.31.0
+telegram-init-data==1.1.0
+psycopg[binary]==3.2.13
+httpx==0.28.1

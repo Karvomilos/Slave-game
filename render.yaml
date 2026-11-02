@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: podopytny-001
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: RUN_BOT
+        value: "1"
+      - key: GAME_URL
+        value: https://podopytny-001.onrender.com
+      - key: FRONTEND_URLS
+        value: https://podopytny-001.onrender.com
+      - key: YOOKASSA_SHOP_ID
+        sync: false
+      - key: YOOKASSA_SECRET_KEY
+        sync: false

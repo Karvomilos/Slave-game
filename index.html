@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="p001-api-url" content="">
+<title>ПОДОПЫТНЫЙ 001</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="stage">
+
+  <header>
+    <div class="brand">ПОДОПЫТНЫЙ <span id="slave-no">001</span></div>
+    <div class="wallet">
+      <div class="chip red"><i></i><b id="v-coins">0</b><span>монет</span></div>
+      <div class="chip gem"><i>◆</i><b id="v-gems">0</b><span>клятв</span><button class="plus" id="btn-gems" title="Купить клятвы">+</button></div>
+      <button class="panel-btn" id="btn-shop">Инвентарь</button>
+      <button class="panel-btn" id="btn-wardrobe">Гардероб</button>
+      <button class="panel-btn" id="btn-decor">Обстановка</button>
+      <button class="panel-btn" id="btn-quests">Задания</button>
+      <button class="vip" id="btn-vip"><span>★ VIP</span><small>ДОХОД ×2</small></button>
+      <div class="more-wrap">
+        <button class="panel-btn" id="btn-more" type="button" aria-expanded="false" aria-controls="more-menu">Прочее ▾<small class="more-hint">профиль, звук, общество, выход</small></button>
+        <div class="more-menu" id="more-menu" hidden>
+          <button class="panel-btn" id="btn-profile">Профиль</button>
+          <button class="panel-btn" id="btn-referral">Друзья</button>
+          <button class="panel-btn" id="btn-leaderboard">Рейтинг</button>
+          <button class="sound" id="btn-sound">Звук: вкл</button>
+          <label class="volume-control" for="volume-range">
+            <span>Громкость <output id="volume-value">60%</output></span>
+            <input id="volume-range" type="range" min="0" max="100" step="1" value="60">
+          </label>
+          <button class="panel-btn" id="btn-leave">уйти</button>
+        </div>
+      </div>
+      <div class="clock"><i class="dot"></i><span id="status-text">СТАБИЛЕН</span></div>
+    </div>
+  </header>
+
+  <main class="arena">
+    <svg class="room" viewBox="0 0 400 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <!-- СТЕНЫ -->
+      <g id="room-walls-0" class="tier" opacity="1">
+        <rect x="-45" y="0" width="490" height="212" fill="#0a0b0f"/>
+        
+        <path d="M150 40 l8 26 l-5 22" stroke="rgba(255,255,255,0.05)" fill="none" stroke-width="1.5"/>
+        <path d="M252 168 l10 22" stroke="rgba(255,255,255,0.05)" fill="none" stroke-width="1.5"/>
+      </g>
+      <g id="room-walls-1" class="tier" opacity="0">
+        <rect x="-45" y="0" width="490" height="212" fill="#0c0d13"/>
+        <rect x="-45" y="122" width="490" height="90" fill="#10121a"/>
+        <line x1="-45" y1="122" x2="445" y2="122" stroke="rgba(255,46,46,0.22)" stroke-width="1.5"/>
+        <g stroke="rgba(255,255,255,0.05)" stroke-width="1">
+          <line x1="0" y1="122" x2="0" y2="212"/><line x1="50" y1="122" x2="50" y2="212"/>
+          <line x1="100" y1="122" x2="100" y2="212"/><line x1="150" y1="122" x2="150" y2="212"/>
+          <line x1="200" y1="122" x2="200" y2="212"/><line x1="250" y1="122" x2="250" y2="212"/>
+          <line x1="300" y1="122" x2="300" y2="212"/><line x1="350" y1="122" x2="350" y2="212"/>
+          <line x1="400" y1="122" x2="400" y2="212"/>
+        </g>
+      </g>
+      <g id="room-walls-2" class="tier" opacity="0">
+        <rect x="-45" y="0" width="490" height="212" fill="#160d12"/>
+        <g stroke="rgba(255,46,46,0.08)" stroke-width="7">
+          <line x1="30" y1="0" x2="30" y2="212"/><line x1="80" y1="0" x2="80" y2="212"/>
+          <line x1="130" y1="0" x2="130" y2="212"/><line x1="180" y1="0" x2="180" y2="212"/>
+          <line x1="230" y1="0" x2="230" y2="212"/><line x1="280" y1="0" x2="280" y2="212"/>
+          <line x1="330" y1="0" x2="330" y2="212"/><line x1="380" y1="0" x2="380" y2="212"/>
+        </g>
+        <line x1="-45" y1="118" x2="445" y2="118" stroke="rgba(255,215,94,0.35)" stroke-width="2"/>
+      </g>
+
+      <!-- ПОЛ -->
+      <g id="room-floor-0" class="tier" opacity="1">
+        <path d="M40 210 L360 210 L445 300 L-45 300 Z" fill="#08090d"/>
+        
+        
+      </g>
+      <g id="room-floor-1" class="tier" opacity="0">
+        <path d="M40 210 L360 210 L445 300 L-45 300 Z" fill="#0d0e13"/>
+        <g stroke="rgba(0,0,0,0.55)" stroke-width="1.5">
+          <line x1="22" y1="222" x2="378" y2="222"/>
+          <line x1="4" y1="240" x2="396" y2="240"/>
+          <line x1="-16" y1="262" x2="416" y2="262"/>
+          <line x1="-36" y1="286" x2="436" y2="286"/>
+        </g>
+        <g stroke="rgba(0,0,0,0.4)" stroke-width="1">
+          <line x1="120" y1="210" x2="96" y2="300"/><line x1="280" y1="210" x2="304" y2="300"/>
+        </g>
+      </g>
+      <g id="room-floor-2" class="tier" opacity="0">
+        <path d="M40 210 L360 210 L445 300 L-45 300 Z" fill="#0d0e13"/>
+        <g stroke="rgba(0,0,0,0.55)" stroke-width="1.5">
+          <line x1="22" y1="222" x2="378" y2="222"/><line x1="4" y1="240" x2="396" y2="240"/>
+          <line x1="-16" y1="262" x2="416" y2="262"/><line x1="-36" y1="286" x2="436" y2="286"/>
+        </g>
+        <path d="M120 228 L280 228 L318 290 L82 290 Z" fill="rgba(255,46,46,0.10)" stroke="rgba(255,46,46,0.4)" stroke-width="1.5"/>
+        <path d="M132 234 L268 234 L298 284 L102 284 Z" fill="none" stroke="rgba(255,46,46,0.22)" stroke-width="1"/>
+      </g>
+      <g id="room-floor-3" class="tier" opacity="0">
+        <path d="M40 210 L360 210 L445 300 L-45 300 Z" fill="#12141b"/>
+        <g stroke="rgba(255,255,255,0.06)" stroke-width="1">
+          <line x1="22" y1="222" x2="378" y2="222"/><line x1="4" y1="240" x2="396" y2="240"/>
+          <line x1="-16" y1="262" x2="416" y2="262"/><line x1="-36" y1="286" x2="436" y2="286"/>
+          <line x1="120" y1="210" x2="96" y2="300"/><line x1="200" y1="210" x2="200" y2="300"/>
+          <line x1="280" y1="210" x2="304" y2="300"/>
+        </g>
+        <path d="M120 228 L280 228 L318 290 L82 290 Z" fill="rgba(255,215,94,0.06)" stroke="rgba(255,215,94,0.35)" stroke-width="1.5"/>
+      </g>
+
+      <!-- ОКНО -->
+      <g id="room-window-0" class="tier" opacity="1">
+        <rect x="58" y="56" width="56" height="68" fill="#05060a" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
+        <g stroke="#1a1c24" stroke-width="3">
+          <line x1="72" y1="56" x2="72" y2="124"/><line x1="86" y1="56" x2="86" y2="124"/><line x1="100" y1="56" x2="100" y2="124"/>
+          <line x1="58" y1="78" x2="114" y2="78"/><line x1="58" y1="101" x2="114" y2="101"/>
+        </g>
+      </g>
+      <g id="room-window-1" class="tier" opacity="0">
+        <rect x="58" y="56" width="56" height="68" fill="#0a0d14" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+        <rect x="58" y="56" width="56" height="68" fill="rgba(143,216,255,0.05)"/>
+        <path fill="#1c0d12" d="M52 50 L72 50 L74 130 L50 130 Z"/>
+        <path fill="#1c0d12" d="M100 50 L120 50 L122 130 L98 130 Z"/>
+        <line x1="50" y1="50" x2="122" y2="50" stroke="rgba(255,46,46,0.35)" stroke-width="2"/>
+      </g>
+      <g id="room-window-2" class="tier" opacity="0">
+        <rect x="58" y="56" width="56" height="68" fill="#0a0d14" stroke="rgba(255,215,94,0.4)" stroke-width="1.5"/>
+        <rect x="61" y="59" width="23" height="29" fill="rgba(255,46,46,0.22)"/>
+        <rect x="88" y="59" width="23" height="29" fill="rgba(255,215,94,0.18)"/>
+        <rect x="61" y="92" width="23" height="29" fill="rgba(143,216,255,0.16)"/>
+        <rect x="88" y="92" width="23" height="29" fill="rgba(255,46,46,0.14)"/>
+        <line x1="86" y1="56" x2="86" y2="124" stroke="#0a0b0f" stroke-width="3"/>
+        <line x1="58" y1="90" x2="114" y2="90" stroke="#0a0b0f" stroke-width="3"/>
+      </g>
+
+      <!-- СТУЛ: от убогого к лучшему -->
+      <g id="room-chair-0" class="tier" opacity="1">
+        <rect x="46" y="200" width="34" height="6" fill="#17181d" transform="rotate(-4 63 203)"/>
+        <rect x="50" y="205" width="5" height="26" fill="#121318"/>
+        <rect x="72" y="203" width="5" height="20" fill="#121318" transform="rotate(8 74 213)"/>
+        <line x1="52" y1="201" x2="76" y2="204" stroke="rgba(0,0,0,0.6)" stroke-width="1.5"/>
+      </g>
+      <g id="room-chair-1" class="tier" opacity="0">
+        <rect x="49" y="205" width="5" height="27" fill="#191b22"/>
+        <rect x="74" y="205" width="5" height="27" fill="#191b22"/>
+        <rect x="56" y="205" width="4" height="27" fill="#15161c"/>
+        <rect x="67" y="205" width="4" height="27" fill="#15161c"/>
+        <rect x="49" y="216" width="30" height="3" fill="#15161c"/>
+        <rect x="45" y="196" width="38" height="9" rx="2" fill="#23252e"/>
+        <line x1="47" y1="199" x2="81" y2="199" stroke="rgba(255,255,255,0.13)" stroke-width="1.4"/>
+        <line x1="47" y1="204" x2="81" y2="204" stroke="rgba(0,0,0,0.45)" stroke-width="1"/>
+      </g>
+      <g id="room-chair-2" class="tier" opacity="0">
+        <!-- задние ножки (темнее) -->
+        <rect x="50" y="194" width="4.5" height="38" fill="#101218"/>
+        <rect x="74" y="194" width="4.5" height="38" fill="#101218"/>
+        <!-- стойки спинки -->
+        <rect x="46" y="150" width="6" height="52" rx="2.5" fill="#232633"/>
+        <rect x="76" y="150" width="6" height="52" rx="2.5" fill="#232633"/>
+        <!-- дуга спинки -->
+        <path d="M45 154 Q64 138 83 154 L83 162 Q64 147 45 162 Z" fill="#2b2f3d"/>
+        <line x1="51" y1="153" x2="77" y2="153" stroke="rgba(255,255,255,0.15)" stroke-width="1.2"/>
+        <!-- перекладины спинки -->
+        <rect x="49" y="166" width="30" height="5" rx="2.2" fill="#262a36"/>
+        <rect x="49" y="179" width="30" height="5" rx="2.2" fill="#262a36"/>
+        <line x1="51" y1="168.5" x2="77" y2="168.5" stroke="rgba(255,255,255,0.09)" stroke-width="1"/>
+        <!-- сиденье с перспективой -->
+        <path d="M42 196 L86 196 L82 206 L46 206 Z" fill="#2b2f3d"/>
+        <line x1="44" y1="197.6" x2="84" y2="197.6" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"/>
+        <line x1="47" y1="204.5" x2="81" y2="204.5" stroke="rgba(0,0,0,0.4)" stroke-width="1"/>
+        <!-- передние ножки -->
+        <rect x="46" y="206" width="5" height="26" fill="#191c24"/>
+        <rect x="77" y="206" width="5" height="26" fill="#191c24"/>
+        <!-- царга между ножками -->
+        <rect x="46" y="216" width="36" height="3" fill="#14161c"/>
+      </g>
+      <g id="room-chair-3" class="tier" opacity="0">
+        <rect x="42" y="164" width="44" height="34" fill="#241c26"/>
+        <rect x="42" y="196" width="44" height="10" fill="#2b212d"/>
+        <rect x="36" y="186" width="8" height="24" fill="#241c26"/>
+        <rect x="84" y="186" width="8" height="24" fill="#241c26"/>
+        <rect x="46" y="206" width="5" height="26" fill="#1a151d"/>
+        <rect x="77" y="206" width="5" height="26" fill="#1a151d"/>
+        <line x1="46" y1="170" x2="82" y2="170" stroke="rgba(255,46,46,0.4)" stroke-width="1.2"/>
+      </g>
+      <g id="room-chair-4" class="tier" opacity="0">
+        <rect x="42" y="140" width="46" height="58" fill="#2a1216" stroke="rgba(255,215,94,0.5)" stroke-width="1.5"/>
+        <path fill="#3a1620" d="M46 144 L84 144 L84 196 L46 196 Z"/>
+        <path fill="#2a1216" d="M42 140 L46 128 L52 140 Z M60 140 L64 126 L68 140 Z M78 140 L84 128 L88 140 Z"/>
+        <rect x="42" y="196" width="46" height="10" fill="#241018"/>
+        <rect x="34" y="184" width="9" height="26" fill="#2a1216" stroke="rgba(255,215,94,0.35)" stroke-width="1"/>
+        <rect x="87" y="184" width="9" height="26" fill="#2a1216" stroke="rgba(255,215,94,0.35)" stroke-width="1"/>
+        <rect x="46" y="206" width="6" height="26" fill="#1c0c10"/>
+        <rect x="78" y="206" width="6" height="26" fill="#1c0c10"/>
+      </g>
+
+      <!-- ЛОЖЕ -->
+      <g id="room-bed-0" class="tier" opacity="1">
+        <rect x="140" y="200" width="120" height="7" fill="#17181d"/>
+        <rect x="148" y="207" width="6" height="24" fill="#121318"/>
+        <rect x="246" y="207" width="6" height="24" fill="#121318"/>
+        <ellipse cx="200" cy="203.5" rx="10" ry="2.6" fill="#07080b"/>
+      </g>
+      <g id="room-bed-1" class="tier" opacity="0">
+        <rect x="132" y="206" width="136" height="16" fill="#1d1f27"/>
+        <line x1="132" y1="214" x2="268" y2="214" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        <line x1="166" y1="206" x2="166" y2="222" stroke="rgba(255,46,46,0.25)" stroke-width="1"/>
+        <line x1="234" y1="206" x2="234" y2="222" stroke="rgba(255,46,46,0.25)" stroke-width="1"/>
+      </g>
+      <g id="room-bed-2" class="tier" opacity="0">
+        <rect x="134" y="188" width="132" height="15" fill="#2a1e28"/>
+        <rect x="134" y="201" width="132" height="21" fill="#33242f"/>
+        <rect x="126" y="194" width="9" height="28" fill="#2a1e28"/>
+        <rect x="265" y="194" width="9" height="28" fill="#2a1e28"/>
+        <line x1="138" y1="195" x2="262" y2="195" stroke="rgba(255,215,94,0.35)" stroke-width="1.2"/>
+      </g>
+      <g id="room-bed-3" class="tier" opacity="0">
+        <rect x="134" y="188" width="132" height="15" fill="#2a1e28"/>
+        <rect x="134" y="201" width="132" height="21" fill="#33242f"/>
+        <rect x="126" y="194" width="9" height="28" fill="#2a1e28"/>
+        <rect x="265" y="194" width="9" height="28" fill="#2a1e28"/>
+        <rect x="130" y="120" width="5" height="88" fill="#241c26"/>
+        <rect x="265" y="120" width="5" height="88" fill="#241c26"/>
+        <rect x="124" y="112" width="152" height="10" fill="#241018" stroke="rgba(255,215,94,0.4)" stroke-width="1"/>
+        <path fill="rgba(42,18,22,0.85)" d="M124 122 L276 122 L268 150 L132 150 Z"/>
+        <line x1="138" y1="195" x2="262" y2="195" stroke="rgba(255,215,94,0.35)" stroke-width="1.2"/>
+      </g>
+
+      <!-- СВЕТ -->
+      <g id="room-light-0" class="tier" opacity="1">
+        <rect x="330" y="150" width="24" height="4" fill="#14151b"/>
+        <rect x="339" y="138" width="6" height="12" fill="#1a1c22"/>
+        <path fill="#ffd75e" d="M342 130 C340 134 340 136 342 138 C344 136 344 134 342 130 Z" opacity="0.8"/>
+        <circle cx="342" cy="134" r="12" fill="rgba(255,215,94,0.07)"/>
+      </g>
+      <g id="room-light-1" class="tier" opacity="0">
+        <line x1="200" y1="0" x2="200" y2="152" stroke="#1a1c22" stroke-width="2.5"/>
+        <path fill="#23262e" d="M190 148 L210 148 L206 158 L194 158 Z"/>
+        <circle cx="200" cy="166" r="9" fill="#e8e2d0" opacity="0.9"/>
+        <circle cx="200" cy="166" r="24" fill="rgba(232,226,208,0.08)"/>
+        <circle cx="200" cy="166" r="42" fill="rgba(232,226,208,0.04)"/>
+      </g>
+      <g id="room-light-2" class="tier" opacity="0">
+        <line x1="336" y1="172" x2="336" y2="232" stroke="#1a1c22" stroke-width="3"/>
+        <path fill="#241c26" d="M324 172 L348 172 L344 154 L328 154 Z"/>
+        <circle cx="336" cy="166" r="16" fill="rgba(255,215,94,0.07)"/>
+        <rect x="326" y="230" width="20" height="4" fill="#14151b"/>
+      </g>
+      <g id="room-light-3" class="tier" opacity="0" filter="url(#glow)">
+        <line x1="200" y1="0" x2="200" y2="150" stroke="#ffd75e" stroke-width="1.5"/>
+        <line x1="180" y1="150" x2="220" y2="150" stroke="#ffd75e" stroke-width="1.5"/>
+        <line x1="186" y1="150" x2="182" y2="164" stroke="#ffd75e" stroke-width="1.2"/>
+        <line x1="214" y1="150" x2="218" y2="164" stroke="#ffd75e" stroke-width="1.2"/>
+        <circle cx="182" cy="167" r="3" fill="#ffd75e"/>
+        <circle cx="200" cy="157" r="3" fill="#ffd75e"/>
+        <circle cx="218" cy="167" r="3" fill="#ffd75e"/>
+        <circle cx="200" cy="158" r="22" fill="rgba(255,215,94,0.06)" stroke="none"/>
+      </g>
+
+      <!-- ГОСПОЖА -->
+      <g id="room-mistress-1" class="tier" opacity="0">
+        <path fill="#2a2028" d="M330 146 C330 136 344 136 344 146 L344 166 L330 166 Z"/>
+        <ellipse cx="337" cy="160" rx="9" ry="11" fill="#3a332c"/>
+        <path fill="#241a20" d="M326 180 L348 180 L356 258 L318 258 Z"/>
+        <line x1="326" y1="188" x2="312" y2="212" stroke="#241a20" stroke-width="4"/>
+        <rect x="306" y="206" width="9" height="12" fill="#2e2a33"/>
+        <line x1="348" y1="188" x2="360" y2="212" stroke="#241a20" stroke-width="4"/>
+      </g>
+      <g id="room-mistress-2" class="tier" opacity="0">
+        <path fill="#171018" d="M328 142 C328 130 346 130 346 142 L346 166 L328 166 Z"/>
+        <ellipse cx="337" cy="158" rx="10" ry="12" fill="#4a4038"/>
+        <path fill="#0d0c0a" d="M322 138 L352 138 L346 130 L328 130 Z"/>
+        <rect x="330" y="146" width="14" height="4" fill="#0d0c0a"/>
+        <path fill="#1c1218" d="M325 178 L349 178 L358 258 L316 258 Z"/>
+        <path fill="#8f1b24" d="M325 178 L349 178 L346 186 L328 186 Z"/>
+        <line x1="349" y1="186" x2="362" y2="208" stroke="#1c1218" stroke-width="4"/>
+        <path d="M362 208 q5 18 -2 34" fill="none" stroke="rgba(255,46,46,0.6)" stroke-width="2"/>
+        <circle cx="333" cy="156" r="1" fill="#0b0c10"/><circle cx="341" cy="156" r="1" fill="#0b0c10"/>
+        <rect x="333" y="165" width="8" height="2" fill="#8f1b24"/>
+      </g>
+      <g id="room-mistress-3" class="tier" opacity="0" filter="url(#glow)">
+        <path fill="#1a1420" d="M326 138 C326 126 348 126 348 138 L348 166 L326 166 Z"/>
+        <ellipse cx="337" cy="156" rx="10" ry="12" fill="#4a4038"/>
+        <path fill="#ffd75e" d="M328 136 L331 128 L335 134 L337 126 L339 134 L343 128 L346 136 Z"/>
+        <path fill="#2a0e14" d="M324 176 L350 176 L360 258 L314 258 Z"/>
+        <path fill="#ffd75e" d="M324 176 L350 176 L347 183 L327 183 Z"/>
+        <line x1="350" y1="184" x2="364" y2="206" stroke="#2a0e14" stroke-width="4"/>
+        <line x1="364" y1="206" x2="364" y2="140" stroke="#ffd75e" stroke-width="2"/>
+        <circle cx="364" cy="136" r="4" fill="#ff2e2e"/>
+        <circle cx="333" cy="154" r="1" fill="#0b0c10"/><circle cx="341" cy="154" r="1" fill="#0b0c10"/>
+        <rect x="333" y="163" width="8" height="2" fill="#8f1b24"/>
+        <ellipse cx="337" cy="200" rx="30" ry="52" fill="rgba(255,46,46,0.05)"/>
+      </g>
+
+      <!-- ТРОФЕИ -->
+      <g id="room-trophy-0" class="tier" opacity="1" transform="translate(-14, 40)">
+        <line x1="312" y1="70" x2="312" y2="110" stroke="#23262e" stroke-width="2.5" stroke-dasharray="4 3"/>
+        <line x1="336" y1="70" x2="336" y2="104" stroke="#23262e" stroke-width="2.5" stroke-dasharray="4 3"/>
+        <circle cx="312" cy="114" r="4.5" fill="none" stroke="#23262e" stroke-width="2.5"/>
+        <circle cx="336" cy="108" r="4.5" fill="none" stroke="#23262e" stroke-width="2.5"/>
+      </g>
+      <g id="room-trophy-1" class="tier" opacity="0" transform="translate(-14, 40)">
+        <line x1="312" y1="70" x2="312" y2="110" stroke="#23262e" stroke-width="2.5" stroke-dasharray="4 3"/>
+        <circle cx="312" cy="114" r="4.5" fill="none" stroke="#23262e" stroke-width="2.5"/>
+        <path d="M340 68 q6 24 -2 44" fill="none" stroke="rgba(255,46,46,0.55)" stroke-width="2.5"/>
+        <rect x="336" y="62" width="7" height="8" fill="#17181d"/>
+      </g>
+      <g id="room-trophy-2" class="tier" opacity="0" transform="translate(-14, 40)">
+        <rect x="296" y="118" width="64" height="5" fill="#1d1f27" stroke="rgba(255,215,94,0.3)" stroke-width="1"/>
+        <rect x="302" y="100" width="10" height="18" fill="#14151b"/>
+        <rect x="318" y="104" width="12" height="14" fill="#171410"/>
+        <path fill="#14151b" d="M338 100 L350 100 L348 118 L340 118 Z"/>
+        <path d="M306 78 q8 10 2 22" fill="none" stroke="rgba(255,46,46,0.55)" stroke-width="2.5"/>
+        <circle cx="344" cy="94" r="3" fill="rgba(255,215,94,0.5)"/>
+      </g>
+
+      <!-- МУСОРКА: кликабельная, мини-игра копания -->
+      <g id="room-trash" transform="translate(-30, 30)" style="cursor:pointer; pointer-events:auto">
+        <title>Мусорка</title>
+        <path d="M298 232 C296 219 305 210 317 212 C323 201 339 199 348 207 C360 202 373 209 376 219 C385 221 390 227 390 232 Z" fill="#14161b"/>
+        <path d="M305 232 C304 223 312 216 322 218 C328 210 342 209 349 215 C358 212 368 217 371 225 C378 226 382 229 382 232 Z" fill="#1e2129"/>
+        <path d="M316 232 C317 226 322 222 328 223 C333 218 342 218 346 222 C352 220 358 223 360 228 C364 229 366 230 366 232 Z" fill="#262a33"/>
+        <rect x="352" y="203" width="7" height="11" fill="#3a3f4a" transform="rotate(20 355 208)"/>
+        <ellipse cx="355.5" cy="203.5" rx="3.5" ry="1.6" fill="#596070" transform="rotate(20 355 208)"/>
+        <path d="M318 211 q-6 -8 -13 -6" fill="none" stroke="#5a6b3a" stroke-width="2.6" stroke-linecap="round"/>
+        <path d="M326 207 q-2 -7 -8 -9" fill="none" stroke="#5a6b3a" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="344" cy="214" r="2" fill="#4a3238"/>
+        <path d="M332 205 q3 -7 0 -13 M346 203 q3 -7 0 -13" fill="none" stroke="rgba(143,216,255,0.14)" stroke-width="1.4"/>
+      </g>
+    </svg>
+    <div class="halo"></div>
+    <div class="floor"></div>
+    <div class="bubble" id="bubble">…</div>
+
+    <button class="side-toggle" id="btn-side-toggle" type="button" title="Свернуть панель">»</button>
+    <div class="side-meter" id="side-meter">
+      <div class="row"><span>Агрессия</span><b id="v-aggr">0%</b></div>
+      <div class="bar"><i id="b-aggr"></i></div>
+      <div class="sub-line" id="belt-label">Пояс послушания: нет</div>
+      <div class="sub-line" id="fetish-label">Склонность: —</div>
+      <div class="sub-line" id="decor-label">Обстановка: лавочка</div>
+      <div class="sub-line" id="respect-label">Обращение: на ты</div>
+      <div class="sub-line quest" id="quest-label">Задание: —</div>
+      <button class="dossier-btn" id="btn-dossier" type="button">Досье</button>
+    </div>
+
+    <div class="pet-pos" id="pet-pos"><div class="pet" id="pet" title="Подопытный">
+      <svg viewBox="0 0 200 210" aria-hidden="true">
+        <defs>
+          <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="3" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="belt-chaos" x="-60%" y="-60%" width="220%" height="220%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.02 0.09" numOctaves="2" seed="7" result="n">
+              <animate attributeName="baseFrequency" dur="2.8s" values="0.02 0.09;0.031 0.13;0.015 0.07;0.02 0.09" repeatCount="indefinite"/>
+            </feTurbulence>
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="10"/>
+          </filter>
+        </defs>
+
+        <g stroke="rgba(255,46,46,0.22)" stroke-width="1.5" fill="none">
+          <path d="M20 40 L20 20 L42 20"/>
+          <path d="M158 20 L180 20 L180 40"/>
+          <path d="M180 170 L180 192 L158 192"/>
+          <path d="M42 192 L20 192 L20 170"/>
+        </g>
+        <line x1="26" y1="105" x2="174" y2="105" stroke="rgba(255,46,46,0.10)" stroke-width="1" stroke-dasharray="3 6"/>
+
+        <g id="fig">
+          <!-- аура пояса послушания -->
+          <g id="belt-aura" opacity="0">
+            <g filter="url(#glow)"><g filter="url(#belt-chaos)">
+              <path class="flame f1" fill="rgba(255,46,46,0.5)" d="M60 154 C48 116 56 82 76 40 C70 88 86 118 80 156 Z"/>
+              <path class="flame f2" fill="rgba(255,84,50,0.45)" d="M140 154 C152 116 144 82 124 40 C130 88 114 118 120 156 Z"/>
+              <path class="flame f3" fill="rgba(255,160,60,0.38)" d="M100 160 C88 118 94 76 100 34 C108 80 114 122 100 160 Z"/>
+              <path class="flame f4" fill="rgba(255,46,46,0.3)" d="M82 158 C74 124 80 92 90 56 C90 96 100 128 94 160 Z"/>
+            </g></g>
+            <polyline class="arc a1" points="62,140 74,118 66,96 78,72 70,50" fill="none" stroke="#ffd76a" stroke-width="1.6" stroke-linecap="round"/>
+            <polyline class="arc a2" points="138,144 128,122 138,100 126,78 134,56" fill="none" stroke="#ff7a4a" stroke-width="1.3" stroke-linecap="round"/>
+            <polyline class="arc a3" points="96,150 104,126 94,104 106,84" fill="none" stroke="#ffe9a3" stroke-width="1" stroke-linecap="round"/>
+            <g id="belt-sparks" fill="#ffd76a" filter="url(#glow)">
+              <circle class="spark s1" cx="58" cy="96" r="1.8"/>
+              <circle class="spark s2" cx="142" cy="86" r="1.5"/>
+              <circle class="spark s3" cx="66" cy="150" r="1.4"/>
+              <circle class="spark s4" cx="136" cy="142" r="2"/>
+              <circle class="spark s5" cx="100" cy="34" r="1.6"/>
+              <circle class="spark s6" cx="80" cy="60" r="1.3"/>
+              <circle class="spark s7" cx="122" cy="120" r="1.2"/>
+            </g>
+          </g>
+          <!-- ===== НОГИ ===== -->
+          <g id="legs">
+            <g class="leg" id="leg-l">
+              <path fill="#14151a" d="M72 143 L97 143 L94 162 L91 171 L93 181 L90 194 L76 194 L77 179 L75 170 L78 160 Z"/>
+              <path fill="#1c1e25" d="M73 145 L86 145 L84 161 L81 171 L82 190 L76 190 L77 178 L75 169 L78 159 Z"/>
+              <path d="M77 169 Q84 172 92 169 M80 177 L79 188" stroke="rgba(255,255,255,0.08)" stroke-width="1.2" fill="none"/>
+              <path fill="#0d0e12" d="M75 191 L90 191 L95 195 L73 196 L70 194 Z"/>
+            </g>
+            <g class="leg" id="leg-r">
+              <path fill="#14151a" d="M103 143 L128 143 L122 160 L125 170 L123 179 L124 194 L110 194 L107 181 L109 171 L106 162 Z"/>
+              <path fill="#101116" d="M114 145 L127 145 L121 160 L124 170 L122 178 L123 190 L116 190 L116 176 L118 167 Z"/>
+              <path d="M108 169 Q116 172 123 169 M120 177 L121 188" stroke="rgba(255,255,255,0.06)" stroke-width="1.2" fill="none"/>
+              <path fill="#0d0e12" d="M110 191 L125 191 L130 194 L127 196 L105 196 Z"/>
+            </g>
+            <!-- кандалы -->
+            <g id="shackles" opacity="0" class="chain">
+              <circle cx="85" cy="182" r="4" fill="none" stroke="#3a3f4a" stroke-width="2.5"/>
+              <circle cx="117" cy="182" r="4" fill="none" stroke="#3a3f4a" stroke-width="2.5"/>
+              <path d="M89 182 h6 m4 0 h6 m4 0 h6" stroke="#3a3f4a" stroke-width="2.5" fill="none"/>
+            </g>
+          </g>
+
+          <!-- ===== ВЕРХ ТЕЛА ===== -->
+          <g id="upper">
+            <!-- торс: плечи, талия и таз -->
+            <path id="skin-body" fill="var(--skin)" d="M79 58 C70 59 64 64 62 72 C67 80 71 91 74 105 L78 119 L72 145 Q100 153 128 145 L122 119 L126 105 C129 91 133 80 138 72 C136 64 130 59 121 58 L110 54 L90 54 Z"/>
+            <path fill="var(--skin-shade)" d="M100 54 L110 54 L121 58 C130 59 136 64 138 72 C133 80 129 91 126 105 L122 119 L128 145 Q114 150 100 150 Z"/>
+            <g fill="none" stroke="rgba(0,0,0,0.28)" stroke-width="1.25">
+              <path d="M76 66 Q86 62 97 68 M124 66 Q114 62 103 68"/>
+              <path d="M73 78 Q83 72 97 79 M127 78 Q117 72 103 79"/>
+              <path d="M75 84 Q85 90 97 84 M125 84 Q115 90 103 84"/>
+              <path d="M100 69 L100 114 M85 96 Q92 93 98 97 M102 97 Q108 93 115 96"/>
+              <path d="M86 106 Q92 103 98 107 M102 107 Q108 103 114 106"/>
+              <path d="M80 92 L85 118 M120 92 L115 118 M78 126 Q86 132 89 145 M122 126 Q114 132 111 145"/>
+            </g>
+            <path d="M82 63 Q90 59 96 63 M78 76 Q86 72 93 75" fill="none" stroke="rgba(255,235,210,0.13)" stroke-width="1.3"/>
+            <ellipse cx="100" cy="118" rx="1.5" ry="1" fill="rgba(0,0,0,0.38)"/>
+
+            <!-- наряды -->
+            <g id="out-rags">
+              <path fill="#1a1c22" d="M79 60 C70 61 65 65 63 73 L71 85 L76 108 L80 120 L74 145 L83 141 L89 150 L98 142 L106 150 L114 141 L124 146 L120 120 L124 108 L129 85 L137 73 C135 65 130 61 121 60 L110 57 L100 71 L90 57 Z"/>
+              <path fill="#22252c" d="M79 61 L90 58 L100 72 L92 83 L83 75 L77 103 L82 120 L77 139 L74 145 L80 120 L76 108 L71 85 L63 73 C65 66 70 62 79 61 Z"/>
+              <path fill="#0f1116" d="M77 108 Q100 116 123 108 L120 120 Q100 126 80 120 Z"/>
+              <path d="M80 110 Q100 117 120 110 M85 127 L82 139 M111 126 L116 140" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.2"/>
+              <path fill="var(--skin)" d="M108 82 L119 80 L116 94 L108 96 L104 90 Z"/>
+              <path fill="#30343d" d="M66 70 L76 62 L79 68 L71 78 Z"/>
+              <path d="M70 79 L75 86 M119 117 L123 120" stroke="rgba(0,0,0,0.5)" stroke-width="1.5"/>
+            </g>
+            <g id="out-shirt" opacity="0">
+              <path fill="#23262e" d="M74 60 C66 68 62 78 62 92 L64 122 L70 122 L70 148 L130 148 L130 122 L136 122 L138 92 C138 78 134 68 126 60 C118 56 109 55 100 55 C91 55 82 56 74 60 Z"/>
+              <line x1="100" y1="58" x2="100" y2="148" stroke="rgba(0,0,0,0.35)" stroke-width="1.5"/>
+              <rect x="96" y="66" width="3" height="3" fill="rgba(255,255,255,0.15)"/>
+              <rect x="96" y="80" width="3" height="3" fill="rgba(255,255,255,0.15)"/>
+            </g>
+            <g id="out-armor" opacity="0">
+              <path fill="#232838" d="M72 62 L128 62 L134 118 L126 148 L74 148 L66 118 Z"/>
+              <g filter="url(#glow)">
+                <line x1="76" y1="80" x2="124" y2="80" stroke="#ff2e2e" stroke-width="1.5"/>
+                <line x1="78" y1="96" x2="122" y2="96" stroke="#ff2e2e" stroke-width="1.5"/>
+                <line x1="100" y1="64" x2="100" y2="146" stroke="#ff2e2e" stroke-width="1"/>
+              </g>
+              <path fill="#1a1e28" d="M62 84 L72 66 L78 84 L70 96 Z"/>
+              <path fill="#1a1e28" d="M138 84 L128 66 L122 84 L130 96 Z"/>
+            </g>
+            <g id="out-pink" opacity="0">
+              <path fill="#a63a5f" d="M74 60 C66 68 62 78 62 92 L64 148 L136 148 L138 92 C138 78 134 68 126 60 C118 56 109 55 100 55 C91 55 82 56 74 60 Z"/>
+              <path fill="#8f2f50" d="M100 55 C109 55 118 56 126 60 C134 68 138 78 138 92 L136 148 L100 148 Z"/>
+              <path fill="var(--skin)" d="M88 59 L100 92 L112 59 C107 56 93 56 88 59 Z"/>
+              <path fill="#c2456e" d="M88 59 L100 92 L96 96 L84 62 Z"/>
+              <path fill="#8f2f50" d="M112 59 L100 92 L104 96 L116 62 Z"/>
+              <rect x="98" y="104" width="4" height="4" fill="#0d0e12"/>
+              <rect x="98" y="120" width="4" height="4" fill="#0d0e12"/>
+            </g>
+            <g id="out-harness" opacity="0">
+              <g stroke="#0d0e12" stroke-width="5" fill="none">
+                <path d="M72 64 L100 98 L128 64"/>
+                <path d="M100 98 L100 148"/>
+                <path d="M64 122 L136 122"/>
+              </g>
+              <g fill="#ff2e2e" filter="url(#glow)">
+                <circle cx="100" cy="98" r="2.4"/>
+                <circle cx="100" cy="122" r="2.4"/>
+              </g>
+            </g>
+            <!-- костюм крокодила: тело -->
+            <g id="out-croc" opacity="0">
+              <path fill="#274a2c" d="M72 60 C64 68 60 78 60 94 L62 150 L138 150 L140 94 C140 78 136 68 128 60 C119 56 109 55 100 55 C91 55 81 56 72 60 Z"/>
+              <path fill="#3a6b40" d="M86 62 L100 59 L114 62 L112 150 L88 150 Z"/>
+              <g stroke="#1c3520" stroke-width="1.5">
+                <line x1="87" y1="78" x2="113" y2="78"/>
+                <line x1="87" y1="94" x2="113" y2="94"/>
+                <line x1="87" y1="110" x2="113" y2="110"/>
+                <line x1="88" y1="126" x2="112" y2="126"/>
+              </g>
+              <g fill="#1c3520">
+                <path d="M70 62 l4 -8 l4 8 Z"/><path d="M92 58 l4 -8 l4 8 Z"/>
+                <path d="M104 58 l4 -8 l4 8 Z"/><path d="M126 62 l4 -8 l4 8 Z"/>
+              </g>
+            </g>
+
+            <!-- руки -->
+            <g class="arm" id="arm-l">
+              <path fill="var(--skin)" d="M66 65 C59 66 55 74 54 85 L56 99 L54 115 L57 141 L64 142 L65 117 L63 102 L69 84 L72 72 Z"/>
+              <path fill="var(--skin-shade)" d="M55 96 Q60 101 64 99 L62 116 L64 139 L58 139 L55 115 L57 102 Z"/>
+              <path d="M56 84 Q61 88 67 84 M56 101 Q60 104 64 102 M58 119 L61 135" fill="none" stroke="rgba(0,0,0,0.28)" stroke-width="1.1"/>
+              <path fill="var(--skin)" d="M57 139 Q54 144 57 149 L61 151 L65 147 L65 140 Z"/>
+              <path d="M58 145 L63 146 M60 142 L60 148" stroke="rgba(0,0,0,0.3)" stroke-width="0.9"/>
+            </g>
+            <g class="arm" id="arm-r">
+              <path fill="var(--skin-shade)" d="M134 65 C141 66 145 74 146 85 L144 99 L146 115 L143 141 L136 142 L135 117 L137 102 L131 84 L128 72 Z"/>
+              <path fill="var(--skin)" d="M134 66 C140 68 142 75 143 85 L141 98 L137 99 L138 84 L131 73 Z"/>
+              <path d="M144 84 Q139 88 133 84 M144 101 Q140 104 136 102 M142 119 L139 135" fill="none" stroke="rgba(0,0,0,0.28)" stroke-width="1.1"/>
+              <path fill="var(--skin-shade)" d="M143 139 Q146 144 143 149 L139 151 L135 147 L135 140 Z"/>
+              <path d="M142 145 L137 146 M140 142 L140 148" stroke="rgba(0,0,0,0.3)" stroke-width="0.9"/>
+            </g>
+            <!-- шуба миллионера -->
+          <g id="out-fur" opacity="0">
+            <path fill="#3a2c1c" d="M68 58 C56 70 52 88 52 116 L56 156 L144 156 L148 116 C148 88 144 70 132 58 C122 52 110 50 100 50 C90 50 78 52 68 58 Z"/>
+            <path fill="#4a3823" d="M60 84 C58 100 58 124 60 150 L70 150 C66 124 66 100 68 84 Z"/>
+            <path fill="#4a3823" d="M140 84 C142 100 142 124 140 150 L130 150 C134 124 134 100 132 84 Z"/>
+            <path fill="#5a4a2e" d="M78 56 C84 46 116 46 122 56 L116 70 C108 62 92 62 84 70 Z"/>
+            <circle cx="58" cy="120" r="6" fill="#4a3823"/>
+            <circle cx="142" cy="120" r="6" fill="#4a3823"/>
+            <circle cx="100" cy="150" r="7" fill="#443520"/>
+            <line x1="100" y1="72" x2="100" y2="150" stroke="rgba(255,215,94,0.4)" stroke-width="1.6"/>
+            <circle cx="100" cy="86" r="2.4" fill="#ffd75e"/>
+            <circle cx="100" cy="106" r="2.4" fill="#ffd75e"/>
+            <circle cx="100" cy="126" r="2.4" fill="#ffd75e"/>
+          </g>
+
+            <!-- мускулистый торс: рельеф поверх кожи -->
+            <g id="out-muscle" opacity="0">
+              <path fill="rgba(170,110,60,0.18)" d="M79 58 C70 59 64 64 62 72 C67 80 71 91 74 105 L78 119 L72 145 Q100 153 128 145 L122 119 L126 105 C129 91 133 80 138 72 C136 64 130 59 121 58 L110 54 L90 54 Z"/>
+              <path d="M70 79 C77 69 91 70 98 79 C94 90 77 92 70 79 Z M130 79 C123 69 109 70 102 79 C106 90 123 92 130 79 Z" fill="rgba(0,0,0,0.27)"/>
+              <path d="M73 76 Q84 68 96 76 M127 76 Q116 68 104 76" fill="none" stroke="rgba(255,235,200,0.28)" stroke-width="1.5"/>
+              <path d="M100 86 L100 142 M83 97 Q90 92 98 97 M102 97 Q110 92 117 97 M85 108 Q91 103 98 108 M102 108 Q109 103 115 108 M88 120 Q93 116 98 120 M102 120 Q107 116 112 120" fill="none" stroke="rgba(0,0,0,0.38)" stroke-width="1.5"/>
+              <path d="M80 91 Q78 109 85 126 M120 91 Q122 109 115 126 M78 130 L88 144 M122 130 L112 144" fill="none" stroke="rgba(0,0,0,0.32)" stroke-width="1.7"/>
+              <path d="M76 66 Q86 60 96 65 M124 66 Q114 60 104 65" fill="none" stroke="rgba(255,235,200,0.18)" stroke-width="1.2"/>
+            </g>
+
+          <!-- золотые руки -->
+            <g id="out-goldarms" opacity="0" filter="url(#glow)">
+              <path fill="#c9a227" d="M66 66 C58 74 55 90 55 114 L57 142 L65 144 L67 116 L70 84 Z"/>
+              <path fill="#b89120" d="M134 66 C142 74 145 90 145 114 L143 142 L135 144 L133 116 L130 84 Z"/>
+              <circle cx="61" cy="143" r="5" fill="#d8b13a"/>
+              <circle cx="139" cy="143" r="5" fill="#b89120"/>
+              <line x1="60" y1="80" x2="58" y2="110" stroke="#ffe9a3" stroke-width="1.4"/>
+              <line x1="140" y1="80" x2="142" y2="110" stroke="#ffe9a3" stroke-width="1.4"/>
+            </g>
+
+            <!-- наручники -->
+            <g id="handcuffs" opacity="0" class="chain">
+              <circle cx="61" cy="138" r="4.5" fill="none" stroke="#3a3f4a" stroke-width="2.5"/>
+              <circle cx="139" cy="138" r="4.5" fill="none" stroke="#3a3f4a" stroke-width="2.5"/>
+            </g>
+
+            <!-- повреждения -->
+            <g id="marks"></g>
+
+            <!-- ===== ГОЛОВА ===== -->
+            <g id="head-g">
+              <rect x="94" y="52" width="12" height="12" fill="var(--skin)"/>
+              <rect x="94" y="58" width="12" height="6" fill="var(--skin-shade)"/>
+              <ellipse cx="100" cy="38" rx="15" ry="18" fill="var(--skin)"/>
+              <path fill="var(--skin-shade)" d="M100 20 a15 18 0 0 1 0 36 Z"/>
+              <path fill="#0d0c0a" d="M85 30 C86 16 114 16 115 30 C118 28 117 36 113 34 C114 28 110 26 108 30 C106 24 96 24 94 30 C92 26 88 28 89 34 C85 36 84 28 85 30 Z"/>
+              <path fill="#0d0c0a" d="M86 32 l-3 6 l4 1 Z M114 32 l3 6 l-4 1 Z"/>
+              <path fill="rgba(0,0,0,0.28)" d="M88 46 C92 54 108 54 112 46 C110 53 90 53 88 46 Z"/>
+              <g id="face-haggard" opacity="0">
+                <ellipse cx="92" cy="40" rx="5" ry="3" fill="rgba(0,0,0,0.35)"/>
+                <ellipse cx="108" cy="40" rx="5" ry="3" fill="rgba(0,0,0,0.35)"/>
+                <line x1="86" y1="46" x2="90" y2="44" stroke="rgba(0,0,0,0.4)" stroke-width="1"/>
+                <line x1="114" y1="46" x2="110" y2="44" stroke="rgba(0,0,0,0.4)" stroke-width="1"/>
+              </g>
+              <rect id="brow-l" x="86" y="31" width="10" height="2.2" fill="#0d0c0a"/>
+              <rect id="brow-r" x="104" y="31" width="10" height="2.2" fill="#0d0c0a"/>
+              <g id="eye-l-g">
+                <g class="eye" id="eye-l">
+                  <ellipse cx="91" cy="37" rx="4.5" ry="2.6" fill="#cfc6bd"/>
+                  <circle cx="91" cy="37" r="1.6" fill="#0b0c10"/>
+                </g>
+              </g>
+              <g id="eye-r-g">
+                <g class="eye" id="eye-r">
+                  <ellipse cx="109" cy="37" rx="4.5" ry="2.6" fill="#cfc6bd"/>
+                  <circle cx="109" cy="37" r="1.6" fill="#0b0c10"/>
+                </g>
+              </g>
+              <line x1="100" y1="38" x2="98.5" y2="44" stroke="rgba(0,0,0,0.3)" stroke-width="1.2"/>
+              <path id="mouth" fill="none" stroke="#141210" stroke-width="1.8" stroke-linecap="square" d="M93 48 Q100 52 107 48"/>
+              <!-- небрежный вид: щетина и растрёпанность при низком достоинстве -->
+              <g id="stubble" opacity="0" stroke="rgba(20,17,14,0.9)" stroke-width="1" stroke-linecap="round">
+                <line x1="89" y1="46" x2="89" y2="48.5"/><line x1="92.5" y1="48" x2="92.5" y2="50.5"/>
+                <line x1="96" y1="49" x2="96" y2="51.5"/><line x1="100" y1="49.5" x2="100" y2="52"/>
+                <line x1="104" y1="49" x2="104" y2="51.5"/><line x1="107.5" y1="48" x2="107.5" y2="50.5"/>
+                <line x1="111" y1="46" x2="111" y2="48.5"/><line x1="90.5" y1="50" x2="90.5" y2="52"/>
+                <line x1="109.5" y1="50" x2="109.5" y2="52"/><line x1="94" y1="51.5" x2="94" y2="53.5"/>
+                <line x1="106" y1="51.5" x2="106" y2="53.5"/><line x1="98" y1="52.5" x2="98" y2="54.5"/>
+                <line x1="102" y1="52.5" x2="102" y2="54.5"/>
+              </g>
+              <g id="messyhair" opacity="0" stroke="#0d0c0a" stroke-width="1.6" fill="none" stroke-linecap="round">
+                <path d="M87 26 q-5 -7 -2 -11"/><path d="M97 20 q1 -8 5 -10"/>
+                <path d="M109 22 q6 -5 4 -11"/><path d="M92 21 q-3 -8 1 -12"/>
+                <path d="M113 28 q7 -2 8 -8"/>
+              </g>
+              <g id="tears" opacity="0">
+                <rect x="90" y="41" width="1.8" height="9" fill="rgba(207,220,235,0.7)"/>
+                <rect x="108" y="41" width="1.8" height="9" fill="rgba(207,220,235,0.7)"/>
+              </g>
+              <g id="out-mask" opacity="0">
+                <path fill="#14151a" d="M86 26 L80 10 L94 20 Z"/>
+                <path fill="#14151a" d="M114 26 L120 10 L106 20 Z"/>
+                <ellipse cx="100" cy="38" rx="16" ry="19" fill="#14151a"/>
+                <path fill="#1b1d24" d="M91 44 L109 44 L105 58 L95 58 Z"/>
+                <circle cx="100" cy="50" r="2.4" fill="#05060a"/>
+                <rect x="87" y="33" width="10" height="3" fill="#ff2e2e" filter="url(#glow)"/>
+                <rect x="103" y="33" width="10" height="3" fill="#ff2e2e" filter="url(#glow)"/>
+                <line x1="84" y1="40" x2="88" y2="44" stroke="rgba(255,46,46,0.5)" stroke-width="1"/>
+                <line x1="116" y1="40" x2="112" y2="44" stroke="rgba(255,46,46,0.5)" stroke-width="1"/>
+              </g>
+              <!-- голова крокодила -->
+              <g id="out-crochead" opacity="0">
+                <path fill="#274a2c" d="M83 22 C83 10 117 10 117 22 L117 32 L83 32 Z"/>
+                <path fill="#2f5734" d="M82 28 L118 28 L127 40 L124 48 L76 48 L73 40 Z"/>
+                <path fill="#1c3520" d="M77 44 L123 44 L121 53 L79 53 Z"/>
+                <path fill="#cfc6bd" d="M80 44 l2.5 4 l2.5 -4 Z M88 44 l2.5 4 l2.5 -4 Z M96 44 l2.5 4 l2.5 -4 Z M104 44 l2.5 4 l2.5 -4 Z M112 44 l2.5 4 l2.5 -4 Z M118 44 l2.5 4 l2.5 -4 Z"/>
+                <ellipse cx="91" cy="18" rx="5" ry="6" fill="#2f5734"/>
+                <ellipse cx="109" cy="18" rx="5" ry="6" fill="#2f5734"/>
+                <circle cx="91" cy="17" r="2.6" fill="#d8c94a"/>
+                <circle cx="109" cy="17" r="2.6" fill="#d8c94a"/>
+                <rect x="90" y="15.5" width="2" height="3" fill="#0b0c10"/>
+                <rect x="108" y="15.5" width="2" height="3" fill="#0b0c10"/>
+                <circle cx="123" cy="38" r="1.4" fill="#0b0c10"/>
+                <circle cx="77" cy="38" r="1.4" fill="#0b0c10"/>
+              </g>
+              <!-- акулий капюшон -->
+              <g id="out-shark" opacity="0">
+                <path fill="#3a3f4a" d="M81 24 C81 8 119 8 119 24 L122 54 L78 54 Z"/>
+                <path fill="#2b2e37" d="M96 12 L100 0 L105 12 Z"/>
+                <ellipse cx="100" cy="37" rx="11" ry="13" fill="var(--skin)"/>
+                <path fill="#e8e2d0" d="M88 27 l3 5 l3 -5 Z M95 25 l3 5 l3 -5 Z M102 25 l3 5 l3 -5 Z M109 27 l3 5 l3 -5 Z"/>
+                <path fill="#e8e2d0" d="M89 48 l3 -5 l3 5 Z M96 50 l3 -5 l3 5 Z M103 50 l3 -5 l3 5 Z M110 48 l3 -5 l3 5 Z" opacity="0.9"/>
+                <circle cx="85" cy="22" r="2.6" fill="#0b0c10"/>
+                <circle cx="115" cy="22" r="2.6" fill="#0b0c10"/>
+                <path d="M78 40 q-5 8 0 14" fill="none" stroke="#2b2e37" stroke-width="3"/>
+                <path d="M122 40 q5 8 0 14" fill="none" stroke="#2b2e37" stroke-width="3"/>
+              </g>
+              <!-- розовые аниме-хвостики -->
+              <g id="out-twintails" opacity="0">
+                <path fill="#e87ab8" d="M85 26 C84 12 116 12 115 26 C110 19 90 19 85 26 Z"/>
+                <path fill="#e87ab8" d="M86 24 C68 26 54 48 52 86 C51 100 58 104 63 94 C70 76 78 48 90 32 Z"/>
+                <path fill="#e87ab8" d="M114 24 C132 26 146 48 148 86 C149 100 142 104 137 94 C130 76 122 48 110 32 Z"/>
+                <path fill="#c2548b" d="M84 30 C72 38 62 58 59 84 C64 62 74 42 88 32 Z"/>
+                <path fill="#c2548b" d="M116 30 C128 38 138 58 141 84 C136 62 126 42 112 32 Z"/>
+                <rect x="83" y="26" width="7" height="5" fill="#ffd76a"/>
+                <rect x="110" y="26" width="7" height="5" fill="#ffd76a"/>
+              </g>
+              <!-- шлем легионера -->
+              <g id="out-helmet" opacity="0">
+                <path fill="#8a8f9a" d="M84 32 C84 12 116 12 116 32 L116 40 L84 40 Z"/>
+                <path fill="#b3232e" d="M95 10 L100 -6 L105 10 L105 22 L95 22 Z"/>
+                <path fill="#8f1b24" d="M97 10 L100 -4 L103 10 L103 22 L97 22 Z"/>
+                <rect x="84" y="30" width="32" height="4" fill="#6e7280"/>
+                <path fill="#8a8f9a" d="M84 40 L90 40 L88 52 L84 50 Z"/>
+                <path fill="#8a8f9a" d="M116 40 L110 40 L112 52 L116 50 Z"/>
+                <line x1="100" y1="32" x2="100" y2="40" stroke="#5a5e68" stroke-width="1.5"/>
+              </g>
+
+            <!-- влюблённые глаза-сердечки -->
+            <g id="out-hearteyes" opacity="0">
+              <path class="heart-eye" fill="#ff2e6a" d="M91 37 C86 32 82 28 85 23.5 C87 20.5 91 21.5 91 25.5 C91 21.5 95 20.5 97 23.5 C100 28 96 32 91 37 Z"/>
+              <path class="heart-eye" fill="#ff2e6a" d="M109 37 C104 32 100 28 103 23.5 C105 20.5 109 21.5 109 25.5 C109 21.5 113 20.5 115 23.5 C118 28 114 32 109 37 Z"/>
+              <path class="mini-heart mh1" fill="#ff6b9a" transform="translate(74,12)" d="M0 2.4 C-1.8 0.4 -3.4 -1 -2.2 -2.8 C-1.2 -4.2 0 -3.4 0 -2 C0 -3.4 1.2 -4.2 2.2 -2.8 C3.4 -1 1.8 0.4 0 2.4 Z"/>
+              <path class="mini-heart mh2" fill="#ff6b9a" transform="translate(126,8)" d="M0 2.4 C-1.8 0.4 -3.4 -1 -2.2 -2.8 C-1.2 -4.2 0 -3.4 0 -2 C0 -3.4 1.2 -4.2 2.2 -2.8 C3.4 -1 1.8 0.4 0 2.4 Z"/>
+              <path class="mini-heart mh3" fill="#ff8fb4" transform="translate(100,0)" d="M0 2.4 C-1.8 0.4 -3.4 -1 -2.2 -2.8 C-1.2 -4.2 0 -3.4 0 -2 C0 -3.4 1.2 -4.2 2.2 -2.8 C3.4 -1 1.8 0.4 0 2.4 Z"/>
+            </g>
+              <g id="gag" opacity="0">
+                <rect x="84" y="45" width="32" height="6" fill="#0a0b0e" stroke="rgba(255,46,46,0.5)" stroke-width="1"/>
+                <rect x="95" y="43.5" width="10" height="9" fill="#ff2e2e" filter="url(#glow)"/>
+              </g>
+              <g id="collar" opacity="0">
+                <rect x="86" y="57" width="28" height="6" fill="#0a0b0e" stroke="rgba(255,46,46,0.55)" stroke-width="1"/>
+                <circle cx="100" cy="66" r="3" fill="none" stroke="#ff2e2e" stroke-width="1.6" filter="url(#glow)"/>
+              </g>
+              <g id="evil-face" opacity="0">
+                <rect x="84" y="29" width="12" height="3" fill="#0d0c0a" transform="rotate(18 90 30)"/>
+                <rect x="104" y="29" width="12" height="3" fill="#0d0c0a" transform="rotate(-18 110 30)"/>
+                <rect x="85" y="35" width="12" height="3.5" fill="#ff2e2e" filter="url(#glow)" transform="rotate(12 91 37)"/>
+                <rect x="103" y="35" width="12" height="3.5" fill="#ff2e2e" filter="url(#glow)" transform="rotate(-12 109 37)"/>
+                <path d="M90 49 l4 -3 l4 3 l4 -3 l4 3 l4 -3" fill="none" stroke="#ff2e2e" stroke-width="2" filter="url(#glow)"/>
+              </g>
+            </g>
+          </g>
+
+          <!-- сапоги поверх ног -->
+          <g id="out-boots" opacity="0">
+            <path fill="#101116" d="M73 146 L96 146 L92 194 L72 194 Z"/>
+            <path fill="#101116" d="M104 146 L127 146 L128 194 L108 194 Z"/>
+            <line x1="74" y1="154" x2="95" y2="154" stroke="rgba(255,46,46,0.5)" stroke-width="1.2"/>
+            <line x1="105" y1="154" x2="126" y2="154" stroke="rgba(255,46,46,0.5)" stroke-width="1.2"/>
+            <rect x="70" y="188" width="24" height="6" fill="#05060a"/>
+            <rect x="106" y="188" width="24" height="6" fill="#05060a"/>
+          </g>
+
+          <!-- тухлые ноги -->
+          <g id="out-rotten" opacity="0">
+            <path fill="#4a5a34" d="M73 146 L96 146 L92 194 L72 194 Z"/>
+            <path fill="#4a5a34" d="M104 146 L127 146 L128 194 L108 194 Z"/>
+            <path fill="#39432a" d="M74 160 L94 160 L93 172 L74 172 Z"/>
+            <path fill="#39432a" d="M106 176 L126 176 L127 188 L107 188 Z"/>
+            <ellipse cx="80" cy="192" rx="6" ry="3" fill="#39432a"/>
+            <ellipse cx="120" cy="192" rx="6" ry="3" fill="#39432a"/>
+            <g class="stink" stroke="#7a8a5a" stroke-width="1.4" fill="none" opacity="0.8">
+              <path d="M78 140 q3 -5 0 -9 q-3 -4 0 -8"/>
+              <path d="M100 146 q3 -5 0 -9 q-3 -4 0 -8"/>
+              <path d="M122 140 q3 -5 0 -9 q-3 -4 0 -8"/>
+            </g>
+          </g>
+
+          <!-- латексные штаны -->
+          <g id="out-latex" opacity="0">
+            <path fill="#0c0d11" d="M74 146 L96 146 L92 194 L73 194 Z"/>
+            <path fill="#0c0d11" d="M104 146 L126 146 L127 194 L108 194 Z"/>
+            <path fill="rgba(255,255,255,0.16)" d="M78 150 L84 150 L82 190 L77 190 Z"/>
+            <path fill="rgba(255,255,255,0.12)" d="M108 150 L113 150 L114 190 L110 190 Z"/>
+            <rect x="74" y="146" width="52" height="4" fill="#05060a"/>
+          </g>
+
+          <!-- розовые колготки с бантиками -->
+          <g id="out-stockings" opacity="0">
+            <path fill="rgba(232,122,184,0.5)" d="M76 148 L94 148 L91 194 L75 194 Z"/>
+            <path fill="rgba(232,122,184,0.5)" d="M106 148 L124 148 L125 194 L109 194 Z"/>
+            <line x1="76" y1="153" x2="94" y2="153" stroke="#c2548b" stroke-width="2"/>
+            <line x1="106" y1="153" x2="124" y2="153" stroke="#c2548b" stroke-width="2"/>
+            <g fill="#e87ab8">
+              <path d="M85 150 L78 145 L78 155 Z"/><path d="M85 150 L92 145 L92 155 Z"/>
+              <circle cx="85" cy="150" r="2"/>
+              <path d="M115 150 L108 145 L108 155 Z"/><path d="M115 150 L122 145 L122 155 Z"/>
+              <circle cx="115" cy="150" r="2"/>
+            </g>
+          </g>
+
+          <!-- юбка -->
+          <g id="out-skirt" opacity="0">
+            <path fill="#5a1520" d="M72 138 L128 138 L140 174 L60 174 Z"/>
+            <path fill="#7a2030" d="M72 138 L128 138 L131 150 L69 150 Z"/>
+            <line x1="86" y1="142" x2="80" y2="170" stroke="rgba(0,0,0,0.3)" stroke-width="1.5"/>
+            <line x1="100" y1="142" x2="100" y2="170" stroke="rgba(0,0,0,0.3)" stroke-width="1.5"/>
+            <line x1="114" y1="142" x2="120" y2="170" stroke="rgba(0,0,0,0.3)" stroke-width="1.5"/>
+            <line x1="62" y1="172" x2="138" y2="172" stroke="rgba(255,215,94,0.5)" stroke-width="1.5"/>
+          </g>
+
+          <!-- красные каблуки -->
+          <g id="out-heels" opacity="0">
+            <path fill="#b01030" d="M72 184 L94 184 L93 194 L72 194 Z"/>
+            <path fill="#b01030" d="M106 184 L128 184 L128 194 L107 194 Z"/>
+            <rect x="74" y="194" width="4" height="7" fill="#7a0a20"/>
+            <rect x="122" y="194" width="4" height="7" fill="#7a0a20"/>
+            <ellipse cx="89" cy="191" rx="5" ry="3" fill="#d4143c"/>
+            <ellipse cx="123" cy="191" rx="5" ry="3" fill="#d4143c"/>
+            <line x1="73" y1="186" x2="93" y2="186" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+            <line x1="107" y1="186" x2="127" y2="186" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+          </g>
+
+          <!-- роба поверх всего -->
+          <g id="out-robe" opacity="0">
+            <path fill="#2a1216" d="M72 60 C64 68 60 80 60 96 L58 192 L142 192 L140 96 C140 80 136 68 128 60 C119 56 109 55 100 55 C91 55 81 56 72 60 Z"/>
+            <path fill="rgba(0,0,0,0.3)" d="M100 55 C109 55 119 56 128 60 C136 68 140 80 140 96 L142 192 L100 192 Z"/>
+            <line x1="84" y1="62" x2="100" y2="78" stroke="rgba(255,46,46,0.35)" stroke-width="1.5"/>
+            <line x1="116" y1="62" x2="100" y2="78" stroke="rgba(255,46,46,0.35)" stroke-width="1.5"/>
+          </g>
+          <!-- пояс послушания: поверх одежды, как цензура -->
+          <g id="out-belt" opacity="0">
+            <rect id="belt-band" x="64" y="116" width="72" height="10" fill="#1a0d10" stroke="#5a1520" stroke-width="1.5"/>
+            <rect id="belt-buckle" x="94" y="114" width="12" height="14" fill="#241318" stroke="#8a6a3a" stroke-width="2"/>
+            <g id="belt-gems" opacity="0" fill="#ff2e2e" filter="url(#glow)">
+              <circle cx="74" cy="121" r="2.2"/>
+              <circle cx="126" cy="121" r="2.2"/>
+            </g>
+            <line x1="100" y1="128" x2="100" y2="146" stroke="#5a1520" stroke-width="2"/>
+          </g>
+          <!-- плеть в руке -->
+          <g id="whip-hand" opacity="0">
+            <rect x="136" y="138" width="7" height="13" rx="2" fill="#241812" transform="rotate(18 139 144)"/>
+            <path d="M141 140 C158 128 152 108 168 94 C180 83 176 70 164 74" fill="none" stroke="#3a2a1a" stroke-width="3" stroke-linecap="round"/>
+            <path d="M141 140 C158 128 152 108 168 94" fill="none" stroke="#5a4228" stroke-width="1.4" stroke-linecap="round"/>
+            <circle cx="164" cy="74" r="2" fill="#8a2020"/>
+          </g>
+        </g>
+
+        <g id="gear-whip" opacity="0" filter="url(#glow)">
+          <path d="M148 190 q12 -20 26 -22 q-8 10 0 16 q-12 4 -16 12" fill="none" stroke="#ff2e2e" stroke-width="2.5" stroke-linecap="square"/>
+          <rect x="142" y="186" width="9" height="4" fill="#ff2e2e"/>
+        </g>
+      </svg>
+    </div></div>
+  </main>
+
+  <section class="stats">
+    <div class="stat crit-watch" id="st-hp" data-stat="hp">
+      <label>HP <b id="v-hp">100</b></label>
+      <div class="bar"><i id="b-hp"></i></div>
+    </div>
+    <div class="stat" id="st-food" data-stat="food">
+      <label>Сытость <b id="v-food">80</b></label>
+      <div class="bar"><i id="b-food"></i></div>
+    </div>
+    <div class="stat" id="st-mood" data-stat="mood">
+      <label>Настроение <b id="v-mood">80</b></label>
+      <div class="bar"><i id="b-mood"></i></div>
+    </div>
+    <div class="stat" id="st-dignity" data-stat="dignity">
+      <label>Достоинство <b id="v-dignity">80</b></label>
+      <div class="bar"><i id="b-dignity"></i></div>
+    </div>
+    <div class="stat" id="st-fear" data-stat="fear">
+      <label>Страх <b id="v-fear">0</b></label>
+      <div class="bar"><i id="b-fear"></i></div>
+    </div>
+    <div class="stat" id="st-obed" data-stat="obed">
+      <label>Послушание <b id="v-obed">50</b></label>
+      <div class="bar"><i id="b-obed"></i></div>
+    </div>
+    <div class="stat gem-stat" id="st-need" data-stat="need">
+      <label>Нужда <b id="v-need">0</b></label>
+      <div class="bar"><i id="b-need"></i></div>
+    </div>
+    <div class="stat gold" id="st-tribute" data-stat="tribute">
+      <label>Ожид. дань <b id="v-tribute">100</b></label>
+      <div class="bar"><i id="b-tribute"></i></div>
+      <div class="sub" id="v-mult">×1.00</div>
+    </div>
+  </section>
+
+  <section class="actions">
+    <button class="act feed" id="btn-feed">Покормить</button>
+    <button class="act" id="btn-hit">влепить</button>
+    <button class="act" id="btn-shame">поругать</button>
+    <button class="act whip" id="btn-whip">наказать</button>
+    <button class="act indulge" id="btn-indulge">Потакание</button>
+    <button class="act" id="btn-auction">Аукцион</button>
+  </section>
+
+  <footer>Кормёжка слабо лечит · оковы сдерживают · пояс страхует · тык в параметр — справка</footer>
+</div>
+
+<!-- выбор лица при входе -->
+<div class="overlay open" id="start-modal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h2>ПРОТОКОЛ ДОПУСКА</h2>
+    <p class="sub">Зафиксируйте внешность подопытного. Внешность — это характер: она навсегда задаст стиль содержания.</p>
+    <div class="face-picks">
+      <button class="face-pick sel" data-face="calm">
+        <svg viewBox="0 0 60 60"><ellipse cx="30" cy="30" rx="16" ry="19" fill="#3a332c"/><path fill="#0d0c0a" d="M15 22 C16 8 44 8 45 22 C42 16 36 14 30 14 C24 14 18 16 15 22 Z"/><ellipse cx="24" cy="29" rx="4" ry="2.4" fill="#cfc6bd"/><circle cx="24" cy="29" r="1.5" fill="#0b0c10"/><ellipse cx="36" cy="29" rx="4" ry="2.4" fill="#cfc6bd"/><circle cx="36" cy="29" r="1.5" fill="#0b0c10"/><path d="M25 40 Q30 43 35 40" stroke="#141210" stroke-width="1.8" fill="none"/></svg>
+        Спокойное
+        <small>Агрессия −15%</small>
+      </button>
+      <button class="face-pick" data-face="haggard">
+        <svg viewBox="0 0 60 60"><ellipse cx="30" cy="30" rx="16" ry="19" fill="#3a332c"/><path fill="#0d0c0a" d="M15 22 C16 8 44 8 45 22 C42 16 36 14 30 14 C24 14 18 16 15 22 Z"/><ellipse cx="24" cy="30" rx="5" ry="3" fill="rgba(0,0,0,0.4)"/><ellipse cx="24" cy="29" rx="4" ry="2.2" fill="#b8afa6"/><circle cx="24" cy="29" r="1.4" fill="#0b0c10"/><ellipse cx="36" cy="30" rx="5" ry="3" fill="rgba(0,0,0,0.4)"/><ellipse cx="36" cy="29" rx="4" ry="2.2" fill="#b8afa6"/><circle cx="36" cy="29" r="1.4" fill="#0b0c10"/><path d="M25 42 Q30 39 35 42" stroke="#141210" stroke-width="1.8" fill="none"/></svg>
+        Измождённое
+        <small>HP 65 · дань +15%</small>
+      </button>
+      <button class="face-pick" data-face="bold">
+        <svg viewBox="0 0 60 60"><ellipse cx="30" cy="30" rx="16" ry="19" fill="#3a332c"/><path fill="#0d0c0a" d="M15 22 C16 8 44 8 45 22 C42 16 36 14 30 14 C24 14 18 16 15 22 Z"/><rect x="19" y="23" width="10" height="2.4" fill="#0d0c0a" transform="rotate(12 24 24)"/><rect x="31" y="23" width="10" height="2.4" fill="#0d0c0a" transform="rotate(-12 36 24)"/><ellipse cx="24" cy="29" rx="4" ry="2.4" fill="#cfc6bd"/><circle cx="25" cy="29" r="1.5" fill="#0b0c10"/><ellipse cx="36" cy="29" rx="4" ry="2.4" fill="#cfc6bd"/><circle cx="37" cy="29" r="1.5" fill="#0b0c10"/><path d="M25 40 Q31 44 37 39" stroke="#141210" stroke-width="1.8" fill="none"/></svg>
+        Дерзкое
+        <small>Дань +10% · агрессия +15%</small>
+      </button>
+    </div>
+    <label class="nickname-field" for="start-nickname">
+      <span>Как вас называть в игре? Этот ник увидят вместо имени Telegram.</span>
+      <input id="start-nickname" type="text" value="Игрок" maxlength="24" autocomplete="off">
+    </label>
+    <p class="profile-note" id="start-nickname-note"></p>
+    <label class="age-check">
+      <input type="checkbox" id="age18">
+      <i></i>
+      <span>Мне есть 18 лет. Я понимаю: игра мрачная, сцен насилия и унижения не скрывает.</span>
+    </label>
+    <button class="big-btn" id="btn-start" disabled>Начать наблюдение</button>
+  </div>
+</div>
+
+<!-- сцена «Потакание» -->
+<div class="overlay" id="indulge-modal">
+  <div class="modal wide" role="dialog" aria-modal="true">
+    <button class="close" data-close="indulge-modal" aria-label="Закрыть">×</button>
+    <h2 id="indulge-title">ПОТАКАНИЕ</h2>
+    <p class="sub" id="indulge-sub">Он смотрит с обожанием. Решение за вами, госпожа.</p>
+    <div class="scene">
+      <div class="pane">
+        <span class="tag">Объект обожания</span>
+        <svg viewBox="0 0 120 160" aria-hidden="true">
+          <!-- ступня · Унижение -->
+          <g id="scene-art-foot" opacity="1">
+            <line x1="10" y1="150" x2="110" y2="150" stroke="rgba(255,46,46,0.35)" stroke-width="1"/>
+            <path fill="var(--skin)" stroke="rgba(255,46,46,0.35)" stroke-width="1.5" d="
+              M34 14 L52 14 L54 76
+              C56 96 66 108 82 116
+              L100 124 C110 128 111 136 103 140
+              L62 144 C44 145 33 133 32 112
+              L34 14 Z"/>
+            <path fill="var(--skin-shade)" d="M52 14 L54 76 C56 96 66 108 82 116 L100 124 C110 128 111 136 103 140 L96 141 C98 132 92 126 80 121 C64 113 52 100 50 76 L48 14 Z"/>
+            <path d="M100 124 q8 2 7 8" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="1.5"/>
+            <path d="M90 120 q7 3 6 9" fill="none" stroke="rgba(0,0,0,0.3)" stroke-width="1.5"/>
+            <path d="M80 116 q6 3 5 9" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="1.5"/>
+            <rect x="34" y="14" width="18" height="6" fill="#0d0e12"/>
+          </g>
+          <!-- пояс с замком · Пояс верности -->
+          <g id="scene-art-belt" opacity="0">
+            <line x1="10" y1="150" x2="110" y2="150" stroke="rgba(255,46,46,0.35)" stroke-width="1"/>
+            <rect x="14" y="58" width="92" height="15" fill="#17181d" stroke="rgba(255,46,46,0.35)" stroke-width="1"/>
+            <line x1="24" y1="58" x2="24" y2="73" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+            <line x1="96" y1="58" x2="96" y2="73" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+            <rect x="52" y="55" width="17" height="21" fill="none" stroke="#8f8574" stroke-width="2.5"/>
+            <line x1="60" y1="76" x2="60" y2="92" stroke="#2b2e37" stroke-width="2.5" stroke-dasharray="4 3"/>
+            <path d="M53 103 v-7 a7 7 0 0 1 14 0 v7" fill="none" stroke="rgba(255,215,94,0.55)" stroke-width="2.5"/>
+            <rect x="50" y="102" width="20" height="17" fill="#1d1f27" stroke="rgba(255,215,94,0.55)" stroke-width="1.5"/>
+            <circle cx="60" cy="109" r="2.5" fill="#0d0e12"/>
+            <line x1="60" y1="111" x2="60" y2="115" stroke="#0d0e12" stroke-width="2"/>
+          </g>
+          <!-- кандалы · Оковы -->
+          <g id="scene-art-chains" opacity="0">
+            <line x1="10" y1="150" x2="110" y2="150" stroke="rgba(255,46,46,0.35)" stroke-width="1"/>
+            <line x1="32" y1="14" x2="32" y2="66" stroke="#23262e" stroke-width="3.5" stroke-dasharray="6 4"/>
+            <line x1="88" y1="14" x2="88" y2="66" stroke="#23262e" stroke-width="3.5" stroke-dasharray="6 4"/>
+            <circle cx="32" cy="80" r="14" fill="none" stroke="#2b2e37" stroke-width="5"/>
+            <circle cx="88" cy="80" r="14" fill="none" stroke="#2b2e37" stroke-width="5"/>
+            <path d="M43 92 Q60 112 77 92" fill="none" stroke="#2b2e37" stroke-width="3.5" stroke-dasharray="6 4"/>
+            <rect x="27" y="70" width="10" height="5" fill="rgba(255,46,46,0.5)"/>
+            <rect x="83" y="70" width="10" height="5" fill="rgba(255,46,46,0.5)"/>
+            <circle cx="60" cy="106" r="2" fill="rgba(255,46,46,0.6)"/>
+          </g>
+          <!-- указующая рука · Унижение -->
+          <g id="scene-art-shame" opacity="0">
+            <line x1="10" y1="150" x2="110" y2="150" stroke="rgba(255,46,46,0.35)" stroke-width="1"/>
+            <rect x="50" y="8" width="20" height="46" fill="var(--skin)"/>
+            <path fill="var(--skin-shade)" d="M62 8 h8 v46 h-8 Z"/>
+            <path fill="var(--skin)" d="M50 54 L70 54 L68 76 L64 76 L63 108 L57 108 L56 76 L52 76 Z"/>
+            <rect x="46" y="44" width="28" height="8" fill="#0d0e12"/>
+            <g stroke="rgba(255,46,46,0.55)" stroke-width="1.5">
+              <line x1="44" y1="96" x2="38" y2="106"/>
+              <line x1="76" y1="96" x2="82" y2="106"/>
+              <line x1="60" y1="118" x2="60" y2="130"/>
+            </g>
+            <text x="60" y="148" text-anchor="middle" font-size="9" fill="rgba(255,46,46,0.6)" font-family="monospace" letter-spacing="2">НИЧТОЖЕСТВО</text>
+          </g>
+          <!-- кнут · Боль -->
+          <g id="scene-art-whip" opacity="0">
+            <line x1="10" y1="150" x2="110" y2="150" stroke="rgba(255,46,46,0.35)" stroke-width="1"/>
+            <rect x="18" y="52" width="26" height="8" rx="0" fill="#241c26" stroke="rgba(255,46,46,0.4)" stroke-width="1" transform="rotate(18 31 56)"/>
+            <path d="M44 62 Q70 74 78 100 T96 138" fill="none" stroke="rgba(255,46,46,0.75)" stroke-width="2.5"/>
+            <path d="M44 62 Q70 74 55 96" fill="none" stroke="rgba(255,46,46,0.3)" stroke-width="1.5"/>
+            <circle cx="96" cy="138" r="2.5" fill="#ff2e2e"/>
+            <g stroke="rgba(255,215,94,0.4)" stroke-width="1.5">
+              <path d="M88 118 q10 4 14 12" fill="none"/>
+              <path d="M78 126 q10 6 12 14" fill="none"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <div class="pane">
+        <span class="tag" id="scene-slave-tag">Подопытный 001</span>
+        <div class="hearts">
+          <span style="left:22%; animation-delay:0s">♥</span>
+          <span style="left:45%; animation-delay:0.8s">♥</span>
+          <span style="left:66%; animation-delay:1.5s">♥</span>
+          <span style="left:35%; animation-delay:1.9s">♥</span>
+        </div>
+        <svg viewBox="0 0 120 130" id="scene-head" aria-hidden="true">
+          <rect x="54" y="96" width="12" height="16" fill="var(--skin)"/>
+          <ellipse cx="60" cy="66" rx="26" ry="32" fill="var(--skin)"/>
+          <path fill="var(--skin-shade)" d="M60 34 a26 32 0 0 1 0 64 Z"/>
+          <path fill="#0d0c0a" d="M35 52 C36 26 84 26 85 52 C89 48 87 60 82 57 C83 46 76 43 73 50 C71 40 52 40 49 50 C46 43 39 46 41 57 C35 60 33 48 35 52 Z"/>
+          <path fill="rgba(0,0,0,0.28)" d="M40 82 C47 96 73 96 80 82 C76 94 44 94 40 82 Z"/>
+          <g filter="url(#glow)">
+            <path fill="#ff2e2e" d="M48 60 C44 54 36 58 40 65 C43 70 48 72 48 72 C48 72 53 70 56 65 C60 58 52 54 48 60 Z"/>
+            <path fill="#ff2e2e" d="M72 60 C68 54 60 58 64 65 C67 70 72 72 72 72 C72 72 77 70 80 65 C84 58 76 54 72 60 Z"/>
+          </g>
+          <rect x="38" y="50" width="14" height="3" fill="#0d0c0a" transform="rotate(-12 45 51)"/>
+          <rect x="68" y="50" width="14" height="3" fill="#0d0c0a" transform="rotate(12 75 51)"/>
+          <path d="M48 84 Q60 96 72 84 Q60 88 48 84 Z" fill="#141210"/>
+          <path d="M53 87 Q60 91 67 87" stroke="rgba(255,107,94,0.7)" stroke-width="2" fill="none"/>
+        </svg>
+      </div>
+    </div>
+    <button class="big-btn" id="scene-kick">Пнуть</button>
+    <button class="big-btn ghost" id="scene-indulge">Потакать</button>
+  </div>
+</div>
+
+<!-- мини-игра «Потакание»: ритм-клики -->
+<div class="overlay" id="mg-modal">
+  <div class="modal mg-card" role="dialog" aria-modal="true">
+    <h2 id="mg-title">ПОТАКАНИЕ</h2>
+    <p class="sub" id="mg-sub">Кликай в такт пульсу.</p>
+    <div class="mg-stage" id="mg-stage">
+      <svg viewBox="0 0 120 160" aria-hidden="true" id="mg-svg"><g id="mg-art"></g></svg>
+      <div class="mg-ring"></div>
+      <div id="mg-play"></div>
+      <div id="mg-floats"></div>
+    </div>
+    <div class="mg-hud"><span>⏱ <b id="mg-time">10.0</b></span><span>Награда <b id="mg-mult">×1.0</b></span></div>
+    <div class="mg-bar"><i id="mg-barfill"></i></div>
+  </div>
+</div>
+
+<!-- мусорка: копание без таймера, лимит тыков -->
+<div class="overlay" id="trash-modal">
+  <div class="modal mg-card" role="dialog" aria-modal="true">
+    <button class="close" data-close="trash-modal" aria-label="Закрыть">×</button>
+    <h2>МУСОРКА</h2>
+    <p class="sub">Слой за слоем. Тыков мало — копай с умом. Под хламом бывают вещи.</p>
+    <div class="trash-pit" id="trash-pit"></div>
+    <div class="trash-find-line" id="trash-find">—</div>
+    <div class="mg-hud"><span>Тыки: <b id="trash-left">8</b></span><span>новая партия через минуту после исчерпания</span></div>
+  </div>
+</div>
+
+<!-- инвентарь -->
+<div class="overlay" id="shop-modal">
+  <div class="modal wide shop-modal" role="dialog" aria-modal="true">
+    <button class="close" data-close="shop-modal" aria-label="Закрыть">×</button>
+    <h2>ИНВЕНТАРЬ</h2>
+    <div class="inv-tabs">
+      <button class="inv-tab sel" id="tab-btn-shop" type="button">Магазин</button>
+      <button class="inv-tab" id="tab-btn-craft" type="button">Крафт</button>
+    </div>
+    <div class="inv-body">
+    <div id="tab-shop">
+      <p class="sub">Снаряжение влияет на дань, агрессию и выживаемость подопытного.</p>
+      <div class="rows">
+        <div class="shop-item">
+          <div class="shop-info"><b>Ошейник</b><span>+0.5 к дани</span></div>
+          <button class="buy" data-item="collar" data-price="10">10 монет</button>
+        </div>
+        <div class="shop-item">
+          <div class="shop-info"><b>Плеть</b><span>+0.5 к дани</span></div>
+          <button class="buy" data-item="gear-whip" data-price="25">25 монет</button>
+        </div>
+        <div class="shop-item">
+          <div class="shop-info"><b>Кляп</b><span>Чтобы помалкивал</span></div>
+          <button class="buy" data-item="gag" data-price="50">50 монет</button>
+        </div>
+        <div class="shop-item">
+          <div class="shop-info"><b>Пояс послушания</b><span id="belt-desc">+0.5 к дани · ур. 0</span></div>
+          <div class="belt-lvls" id="belt-lvls"></div>
+          <button class="buy" id="btn-belt">15 монет</button>
+        </div>
+        <div class="shop-item">
+          <div class="shop-info"><b>Бритва</b><span id="razor-desc">Бритьё: +20 достоинства · можно порезать</span></div>
+          <button class="buy" id="btn-razor">30 монет</button>
+        </div>
+        <div class="shop-item">
+          <div class="shop-info"><b>Наручники</b><span>Агрессия медленнее · меньше ◆</span></div>
+          <button class="buy" data-restraint="handcuffs" data-price="20">20 монет</button>
+        </div>
+        <div class="shop-item">
+          <div class="shop-info"><b>Кандалы</b><span>Агрессия медленнее · меньше ◆</span></div>
+          <button class="buy" data-restraint="shackles" data-price="35">35 монет</button>
+        </div>
+      </div>
+    </div>
+    <div id="tab-craft" hidden>
+      <p class="sub">Из хлама из мусорки. Покупные вещи собираются без условий. Артефакты — только золотыми руками из гардероба.</p>
+      <div class="junk-line" id="junk-line">Хлам: пусто — копайся в мусорке.</div>
+      <div class="rows" id="craft-rows"></div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- гардероб -->
+<div class="overlay" id="wardrobe-modal">
+  <div class="modal wide shop-modal" role="dialog" aria-modal="true">
+    <button class="close" data-close="wardrobe-modal" aria-label="Закрыть">×</button>
+    <h2>ГАРДЕРОБ</h2>
+    <p class="sub">Слоты: тело, голова, штаны, ноги, руки. Всё совмещается. Наряд виден на модели.</p>
+    <div class="rows" id="wardrobe">
+      <div class="shop-item">
+        <i class="swatch" style="background:#1a1c22"></i>
+        <div class="shop-info"><b>Лохмотья</b><span>Тело · выдано при поступлении</span></div>
+        <button class="buy" data-outfit="rags">Надето</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#23262e"></i>
+        <div class="shop-info"><b>Рубашка</b><span>Тело · почти прилично</span></div>
+        <button class="buy" data-outfit="shirt">20 монет</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#2a1216"></i>
+        <div class="shop-info"><b>Роба</b><span>Тело · тяжёлая, с запахом камеры</span></div>
+        <button class="buy" data-outfit="robe">45 монет</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#232838"></i>
+        <div class="shop-info"><b>Броня</b><span>Тело · за редкие клятвы</span></div>
+        <button class="buy gem-price" data-outfit="armor">15 ◆</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#a63a5f"></i>
+        <div class="shop-info"><b>Розовый пиджак</b><span>Тело · ирония в ткани</span></div>
+        <button class="buy" data-outfit="pink">60 монет</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#0d0e12"></i>
+        <div class="shop-info"><b>Шлейка</b><span>Тело · ремни и заклёпки</span></div>
+        <button class="buy" data-outfit="harness">45 монет</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#274a2c"></i>
+        <div class="shop-info"><b>Костюм крокодила</b><span>Тело · бомбардиро. Не спрашивай</span></div>
+        <button class="buy" data-outfit="croc">90 монет</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#14151a"></i>
+        <div class="shop-info"><b>Маска пса</b><span>Голова · скрывает лицо</span></div>
+        <button class="buy gem-price" data-outfit="mask">8 ◆</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#2f5734"></i>
+        <div class="shop-info"><b>Голова крокодила</b><span>Голова · зубы настоящие</span></div>
+        <button class="buy gem-price" data-outfit="crochead">12 ◆</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#3a3f4a"></i>
+        <div class="shop-info"><b>Акулий капюшон</b><span>Голова · тралалеро одобряет</span></div>
+        <button class="buy gem-price" data-outfit="shark">10 ◆</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#101116"></i>
+        <div class="shop-info"><b>Сапоги</b><span>Ноги · тяжёлый шаг</span></div>
+        <button class="buy" data-outfit="boots">30 монет</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#e87ab8"></i>
+        <div class="shop-info"><b>Розовые хвостики</b><span>Голова · аниме было ошибкой</span></div>
+        <button class="buy" data-outfit="twintails">70 монет</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#8a8f9a"></i>
+        <div class="shop-info"><b>Шлем легионера</b><span>Голова · легион из одного</span></div>
+        <button class="buy" data-outfit="helmet">55 монет</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#4a5a34"></i>
+        <div class="shop-info"><b>Тухлые ноги</b><span>Ноги · запах — часть образа</span></div>
+        <button class="buy" data-outfit="rotten">25 монет</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#c9a227"></i>
+        <div class="shop-info"><b>Золотые руки</b><span>Руки · сияют. Навсегда</span></div>
+        <button class="buy gem-price" data-outfit="goldarms">14 ◆</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#0c0d11"></i>
+        <div class="shop-info"><b>Латексные штаны</b><span>Штаны · блестят, как его шансы на побег</span></div>
+        <button class="buy" data-outfit="latex">80 монет</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#e87ab8"></i>
+        <div class="shop-info"><b>Розовые колготки</b><span>Штаны · с бантиками. Унижение в чистом виде</span></div>
+        <button class="buy" data-outfit="stockings">95 монет</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#5a1520"></i>
+        <div class="shop-info"><b>Юбка</b><span>Штаны · короткая, со складками</span></div>
+        <button class="buy" data-outfit="skirt">50 монет</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#b01030"></i>
+        <div class="shop-info"><b>Красные каблуки</b><span>Ноги · стук слышен из коридора</span></div>
+        <button class="buy" data-outfit="heels">70 монет</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#3a2c1c"></i>
+        <div class="shop-info"><b>Шуба миллионера</b><span>Тело · тяжёлая, чужая, статусная</span></div>
+        <button class="buy" data-outfit="fur">250 монет</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#ff2e6a"></i>
+        <div class="shop-info"><b>Влюблённые глаза</b><span>Голова · сердечки торчат и бьются. Навсегда</span></div>
+        <button class="buy gem-price" data-outfit="hearteyes">12 ◆</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#6a4a34"></i>
+        <div class="shop-info"><b>Мускулистый торс</b><span>Тело · урон по нему почти вдвое мягче</span></div>
+        <button class="buy" data-outfit="muscle">120 монет</button>
+      </div>
+      <div class="shop-item full" style="border-top:2px solid var(--red)">
+        <div class="shop-info"><b>КАРТОЧКА</b><span>Фон данных игрока. Отображается только в профиле и сохраняется при смене подопытного.</span></div>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#46515c"></i>
+        <div class="shop-info"><b>Серый графит</b><span>Карточка · спокойный серо-синий</span></div>
+        <button class="buy" data-profile-card="slate">100 монет</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#756b58"></i>
+        <div class="shop-info"><b>Пыльный песок</b><span>Карточка · приглушённый коричневый</span></div>
+        <button class="buy" data-profile-card="sand">100 монет</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#4c5b4b"></i>
+        <div class="shop-info"><b>Старый мох</b><span>Карточка · тёмный серо-зелёный</span></div>
+        <button class="buy" data-profile-card="moss">100 монет</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch" style="background:#69434a"></i>
+        <div class="shop-info"><b>Выцветшее вино</b><span>Карточка · скромный бордовый</span></div>
+        <button class="buy" data-profile-card="wine">100 монет</button>
+      </div>
+      <div class="shop-item">
+        <i class="swatch silver"></i>
+        <div class="shop-info"><b>Серебряный завиток</b><span>Карточка · бело-серебряное сияние и витиеватые узоры</span></div>
+        <button class="buy gem-price" data-profile-card="silver">50 ◆</button>
+      </div>
+      <div class="shop-item full" style="border-top:2px solid var(--red)">
+        <div class="shop-info"><b>ОПЕРАЦИОННАЯ</b><span>Тело — тоже товар. Каждый новый подопытный прибывает со своими ростом и корпусом. Здесь их можно перекроить.</span></div>
+      </div>
+      <div class="shop-item">
+        <div class="shop-info"><b>Рост</b><span id="op-h-cur">—</span></div>
+        <div class="belt-lvls" id="op-h">
+          <button type="button" data-bh="0.94" title="низкий">Н</button>
+          <button type="button" data-bh="1.00" title="средний">С</button>
+          <button type="button" data-bh="1.08" title="высокий">В</button>
+        </div>
+      </div>
+      <div class="shop-item">
+        <div class="shop-info"><b>Корпус</b><span id="op-w-cur">—</span></div>
+        <div class="belt-lvls" id="op-w">
+          <button type="button" data-bw="0.95" title="щуплый">Щ</button>
+          <button type="button" data-bw="1.12" title="крупный">К</button>
+          <button type="button" data-bw="1.28" title="громила">Г</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- профиль игрока -->
+<div class="overlay" id="profile-modal">
+  <div class="modal wide shop-modal" role="dialog" aria-modal="true">
+    <button class="close" data-close="profile-modal" aria-label="Закрыть">×</button>
+    <h2>ПРОФИЛЬ</h2>
+    <p class="sub">Игровой ник виден в рейтинге вместо данных Telegram.</p>
+    <div class="profile-card" id="profile-card">
+      <svg class="profile-card-pattern" viewBox="0 0 500 240" preserveAspectRatio="none" aria-hidden="true">
+        <g fill="none" stroke="#f8fbff" stroke-width="2">
+          <path d="M-20 42 C45 -8 120 5 108 52 C98 91 38 77 50 43 C61 15 103 31 84 50 C61 73 30 108 71 128 C118 151 154 102 139 72"/>
+          <path d="M520 192 C455 248 380 235 392 188 C402 149 462 163 450 197 C439 225 397 209 416 190 C439 167 470 132 429 112 C382 89 346 138 361 168"/>
+          <path d="M177 238 C157 192 199 171 222 194 C246 219 211 239 202 216 C193 192 235 151 278 166 C319 180 310 215 284 213 C258 211 262 180 285 184"/>
+        </g>
+      </svg>
+      <div class="profile-avatar" id="profile-avatar"></div>
+      <div class="profile-data">
+        <h3 id="profile-nickname">Игрок</h3>
+        <p id="profile-slave">Подопытный 001</p>
+        <p id="profile-card-name">Карточка: базовая</p>
+        <label class="nickname-field" for="profile-nickname-input">
+          <span id="profile-nickname-price">Первая смена ника бесплатно</span>
+          <input id="profile-nickname-input" type="text" maxlength="24" autocomplete="off">
+        </label>
+        <button class="big-btn" id="btn-save-nickname" type="button">Сохранить ник</button>
+        <p class="profile-note" id="profile-note"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- обстановка -->
+<div class="overlay" id="decor-modal">
+  <div class="modal wide shop-modal" role="dialog" aria-modal="true">
+    <button class="close" data-close="decor-modal" aria-label="Закрыть">×</button>
+    <h2>ОБСТАНОВКА</h2>
+    <p class="sub">Каждый уровень интерьера: +4% к оплате. Чем роскошнее комната, тем уважительнее обращение подопытного. Смерть подопытного обнуляет комфорт.</p>
+    <div class="rows">
+      <div class="shop-item">
+        <div class="shop-info"><b>Стул</b><span id="slot-desc-chair">Сломанный табурет</span></div>
+        <button class="buy" data-slot="chair">—</button>
+      </div>
+      <div class="shop-item">
+        <div class="shop-info"><b>Ложе</b><span id="slot-desc-bed">Дырявая лавочка</span></div>
+        <button class="buy" data-slot="bed">—</button>
+      </div>
+      <div class="shop-item">
+        <div class="shop-info"><b>Пол</b><span id="slot-desc-floor">Голая земля</span></div>
+        <button class="buy" data-slot="floor">—</button>
+      </div>
+      <div class="shop-item">
+        <div class="shop-info"><b>Стены</b><span id="slot-desc-walls">Плесень и сырость</span></div>
+        <button class="buy" data-slot="walls">—</button>
+      </div>
+      <div class="shop-item">
+        <div class="shop-info"><b>Свет</b><span id="slot-desc-light">Свеча</span></div>
+        <button class="buy" data-slot="light">—</button>
+      </div>
+      <div class="shop-item">
+        <div class="shop-info"><b>Окно</b><span id="slot-desc-window">Решётка</span></div>
+        <button class="buy" data-slot="window">—</button>
+      </div>
+      <div class="shop-item">
+        <div class="shop-info"><b>Трофеи</b><span id="slot-desc-trophy">Цепи на стене</span></div>
+        <button class="buy" data-slot="trophy">—</button>
+      </div>
+    </div>
+      <div class="shop-item mistress-item">
+        <i class="swatch" style="background:#5a1520"></i>
+        <div class="shop-info"><b>Госпожа</b><span id="mistress-desc">Живая. Только за клятвы. Даёт постоянные задания</span></div>
+        <button class="buy gem-price" id="btn-mistress">100 ◆</button>
+      </div>
+  </div>
+</div>
+
+<!-- справка по параметрам -->
+<div class="overlay" id="stat-modal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <button class="close" data-close="stat-modal" aria-label="Закрыть">×</button>
+    <h2 id="stat-title">ПАРАМЕТР</h2>
+    <p class="sub" id="stat-desc"></p>
+    <p class="sub" id="stat-up" style="color:rgba(143,216,255,0.85)"></p>
+    <p class="sub" id="stat-down" style="color:rgba(255,107,94,0.85)"></p>
+  </div>
+</div>
+
+<!-- досье -->
+<div class="overlay" id="dossier-modal">  <div class="modal" role="dialog" aria-modal="true">
+    <button class="close" data-close="dossier-modal" aria-label="Закрыть">×</button>
+    <h2>ДОСЬЕ</h2>
+    <div id="dossier-locked">
+      <p class="sub">Наблюдение не завершено. Склонность подопытного неизвестна — но взгляд его выдаёт. Изучайте его (клики по подопытному) или купите заключение экспертов.</p>
+      <p class="sub" id="dossier-progress">Изучено: 0/10</p>
+      <button class="big-btn" id="dossier-buy">Купить досье · 50 монет</button>
+    </div>
+    <div id="dossier-open" style="display:none">
+      <p class="sub">Склонность: <b id="dossier-fetish" style="color:var(--red)"></b></p>
+      <p class="sub" id="dossier-bonus"></p>
+      <p class="sub" id="dossier-risk" style="color:rgba(255,107,94,0.85)"></p>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="vip-modal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <button class="close" data-close="vip-modal" aria-label="Закрыть">×</button>
+    <h2>VIP-ДОСТУП</h2>
+    <p class="price">500 ₽<span>/мес</span></p>
+    <ul>
+      <li>Достоинство не падает само</li>
+      <li>×2 монеты за каждую порку</li>
+      <li>Красная аура подопытного</li>
+      <li>Приоритет в очереди на унижение</li>
+    </ul>
+    <button class="big-btn" id="vip-pay">Оформить подписку</button>
+    <p class="stub-note" id="vip-stub">Не удалось создать платёж. Попробуйте позже.</p>
+  </div>
+</div>
+
+<div class="overlay" id="referral-modal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <button class="close" data-close="referral-modal" aria-label="Закрыть">×</button>
+    <h2>ПРИГЛАСИТЬ ДРУГА</h2>
+    <p class="sub">Новому игроку — 10 клятв, вам — 25 клятв после его первого входа. Бонус выдаётся один раз.</p>
+    <input class="referral-link" id="referral-link" type="text" readonly aria-label="Реферальная ссылка">
+    <button class="big-btn" id="btn-copy-referral">Скопировать ссылку</button>
+    <p class="sub" id="referral-stats">Приглашено: 0</p>
+    <p class="stub-note" id="referral-stub"></p>
+  </div>
+</div>
+
+<div class="overlay" id="gem-modal">
+  <div class="modal gem-modal" role="dialog" aria-modal="true">
+    <button class="close" data-close="gem-modal" aria-label="Закрыть">×</button>
+    <h2>КЛЯТВЫ</h2>
+    <p class="sub">Редкая валюта. Фармить нельзя — только купить. Или заслужить потаканием.</p>
+    <button class="pack" data-pack="10"><b>◆ 10 клятв</b><span>99 ₽</span></button>
+    <button class="pack" data-pack="60"><b>◆ 60 клятв</b><span>449 ₽</span></button>
+    <button class="pack" data-pack="150"><b>◆ 150 клятв</b><span>899 ₽</span></button>
+    <p class="stub-note" id="gem-stub">Не удалось создать платёж. Попробуйте позже.</p>
+  </div>
+</div>
+
+<!-- редкий фетиш -->
+<div class="overlay" id="rare-modal">
+  <div class="modal" role="dialog" aria-modal="true" style="border-color:rgba(212,175,55,.55)">
+    <button class="close" data-close="rare-modal" aria-label="Закрыть">×</button>
+    <h2 style="color:#d4af37">РЕДКИЙ ФЕТИШ!</h2>
+    <p class="moral" id="rare-text"></p>
+    <button class="big-btn" id="btn-rare-ok">Занятно</button>
+  </div>
+</div>
+
+<!-- список заданий -->
+<div class="overlay" id="quests-modal">
+  <div class="modal wide" role="dialog" aria-modal="true">
+    <button class="close" data-close="quests-modal" aria-label="Закрыть">×</button>
+    <h2>ЗАДАНИЯ</h2>
+    <h3 class="q-h">День</h3>
+    <div id="q-daily"></div>
+    <h3 class="q-h">Неделя</h3>
+    <div id="q-weekly"></div>
+    <h3 class="q-h">Госпожа</h3>
+    <div id="q-mistress"></div>
+  </div>
+</div>
+
+<!-- таблицы лидеров -->
+<div class="overlay" id="leaderboard-modal">
+  <div class="modal wide" role="dialog" aria-modal="true">
+    <button class="close" data-close="leaderboard-modal" aria-label="Закрыть">×</button>
+    <h2>ТАБЛИЦЫ ЛИДЕРОВ</h2>
+    <div class="leaderboard-grid">
+      <section class="hell-board">
+        <h3 class="q-h">Зал позора</h3>
+        <p class="sub">Больше всех погубленных подопытных.</p>
+        <ol class="leaderboard-list" id="leaderboard-shame"><li>Загрузка…</li></ol>
+      </section>
+      <section class="heaven-board">
+        <h3 class="q-h">Комната власти</h3>
+        <p class="sub">Первостепенные слуги с лучшим сроком жизни</p>
+        <ol class="leaderboard-list" id="leaderboard-power"><li>Загрузка…</li></ol>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- смерть -->
+<div class="overlay" id="death">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h2>ВЫ ПОТЕРЯЛИ<br>ИСТОЧНИК ДОХОДА</h2>
+    <p class="moral">«Мёртвая рабская туша? Нам больше не следует здесь оставаться.»<br><b>HP исчерпано.</b> Обстановка брошена — весь комфорт утрачен.</p>
+    <button class="big-btn" id="btn-new-death">Принять нового подопытного</button>
+  </div>
+</div>
+
+<!-- побег -->
+<div class="overlay" id="escape-modal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h2>ПОБЕГ</h2>
+    <p class="moral" id="escape-text">Агрессия достигла предела. Оковы разорваны.<br>Он <b>украл часть монет</b> и растворился во тьме.</p>
+    <button class="big-btn" id="btn-new-escape">Принять нового подопытного</button>
+  </div>
+</div>
+
+<div id="glitch"></div>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

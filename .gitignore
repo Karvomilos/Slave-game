@@ -1,0 +1,11 @@
+token.txt
+supabase_url.txt
+game_url.txt
+.env
+database.db
+database.db-wal
+database.db-shm
+__pycache__/
+*.py[cod]
+.vercel/
+.tools/
