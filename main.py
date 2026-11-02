@@ -21,7 +21,7 @@ from db import database, init_database
 from payments import PaymentError, create_payment, get_verified_payment
 
 BASE_DIR = Path(__file__).resolve().parent
-GAME_URL = os.getenv("GAME_URL", "http://127.0.0.1:8000")
+GAME_URL = os.getenv("GAME_URL", "https://slave-game.pages.dev")
 GAME_URL_FILE = BASE_DIR / "game_url.txt"
 REFERRER_REWARD = 25
 REFERRED_PLAYER_REWARD = 10
