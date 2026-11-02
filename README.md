@@ -52,10 +52,10 @@ git push -u origin main
 ## Запуск на Render
 
 1. В Render выберите **New + → Blueprint** и подключите GitHub-репозиторий.
-2. Render найдёт `render.yaml` и предложит создать Web Service `podopytny-001`. Отдельная база Render не нужна.
+2. Render найдёт `render.yaml` и предложит создать Web Service `slave-game-1`. Отдельная база Render не нужна.
 3. В **Environment** задайте `DATABASE_URL` с реальным паролем Supabase и `BOT_TOKEN`. `YOOKASSA_SHOP_ID` и `YOOKASSA_SECRET_KEY` можно заполнить позже.
 4. Запустите Blueprint. Persistent Disk не нужен: прогресс хранится в Supabase.
-5. После деплоя откройте `https://podopytny-001.onrender.com/api/health`. Ожидаемый ответ: `{"status":"ok","database":"postgresql"}`.
+5. После деплоя откройте `https://slave-game-1.onrender.com/api/health`. Ожидаемый ответ: `{"status":"ok","database":"postgresql"}`.
 6. Отправьте боту `/start`. Кнопка «Воспитать» откроет игру.
 
 Если изменили имя сервиса в `render.yaml`, также измените `GAME_URL` и `FRONTEND_URLS` на фактический HTTPS-адрес. Не запускайте одновременно локального бота и Render-бота с одним токеном: Telegram не допускает два polling-процесса.
@@ -72,7 +72,7 @@ git push -u origin main
 В кабинете ЮKassa укажите webhook:
 
 ```text
-https://podopytny-001.onrender.com/api/payments/yookassa
+https://slave-game-1.onrender.com/api/payments/yookassa
 ```
 
 Нужно событие `payment.succeeded`; событие об отмене также обрабатывается. Приложение не доверяет содержимому webhook: оно повторно запрашивает платёж у ЮKassa и начисляет товар только после подтверждения. Повторная доставка webhook не дублирует начисление. Ключи используются только на backend и не попадают в браузер.

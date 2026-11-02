@@ -8,7 +8,9 @@ from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import urlencode, urlsplit, urlunsplit
 
+import httpx
 from aiogram import Bot, Dispatcher
+from aiogram.exceptions import TelegramRetryAfter
 from aiogram.filters import CommandStart
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
 from fastapi import FastAPI, HTTPException
@@ -21,7 +23,7 @@ from db import database, init_database
 from payments import PaymentError, create_payment, get_verified_payment
 
 BASE_DIR = Path(__file__).resolve().parent
-GAME_URL = os.getenv("GAME_URL", "https://slave-game.pages.dev")
+GAME_URL = os.getenv("GAME_URL", "https://slave-game-1.onrender.com")
 GAME_URL_FILE = BASE_DIR / "game_url.txt"
 REFERRER_REWARD = 25
 REFERRED_PLAYER_REWARD = 10
@@ -163,32 +165,58 @@ async def start(message: Message) -> None:
 async def run_bot() -> None:
     global bot_username
     bot = Bot(token=get_bot_token())
+    retry_delay = 5
     try:
-        me = await bot.get_me()
-        await bot.set_my_name(name="My talking servant")
-        bot_username = me.username or bot_username
-        await dp.start_polling(bot)
-    except asyncio.CancelledError:
-        raise
-    except Exception:
-        logging.exception("Telegram-бот остановлен из-за ошибки")
+        while True:
+            delay = retry_delay
+            try:
+                me = await bot.get_me()
+                bot_username = me.username or bot_username
+                retry_delay = 5
+                await dp.start_polling(bot)
+                logging.warning("Telegram-polling завершён; выполняется перезапуск")
+            except asyncio.CancelledError:
+                raise
+            except TelegramRetryAfter as error:
+                delay = max(1, error.retry_after) + 1
+                logging.warning("Telegram rate limit; повторный запуск через %s сек.", delay)
+            except Exception:
+                logging.exception("Ошибка Telegram-бота; выполняется перезапуск")
+                retry_delay = min(retry_delay * 2, 60)
+            await asyncio.sleep(delay)
     finally:
         await bot.session.close()
+
+
+async def keep_render_awake() -> None:
+    render_url = os.getenv("RENDER_EXTERNAL_URL", get_game_url()).rstrip("/")
+    hostname = urlsplit(render_url).hostname or ""
+    if not os.getenv("RENDER") or not hostname.endswith(".onrender.com"):
+        return
+    async with httpx.AsyncClient(timeout=30) as client:
+        while True:
+            await asyncio.sleep(13 * 60)
+            try:
+                response = await client.get(f"{render_url}/api/health")
+                response.raise_for_status()
+            except asyncio.CancelledError:
+                raise
+            except httpx.HTTPError as error:
+                logging.warning("Keepalive-запрос Render не выполнен: %s", error)
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     init_database()
-    bot_task = None
+    tasks = [asyncio.create_task(keep_render_awake())]
     if os.getenv("RUN_BOT", "1").lower() not in {"0", "false", "no"}:
-        bot_task = asyncio.create_task(run_bot())
-    yield
-    if bot_task:
-        bot_task.cancel()
-        try:
-            await bot_task
-        except asyncio.CancelledError:
-            pass
+        tasks.append(asyncio.create_task(run_bot()))
+    try:
+        yield
+    finally:
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
 
 
 app = FastAPI(title="ПОДОПЫТНЫЙ 001 API", lifespan=lifespan)
