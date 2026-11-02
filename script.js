@@ -3271,12 +3271,9 @@
     return Math.max(0, Math.floor(((slaveEndedAt || Date.now()) - slaveBornAt) / 3600000));
   }
   function updateOldestSlaveAge() {
-    const ageHours = currentSlaveAgeHours();
-    if (ageHours > oldestSlaveAgeHours) {
-      oldestSlaveAgeHours = ageHours;
-      oldestSlaveNo = slaveNo;
-    }
-    oldestSlaveAgeDays = Math.max(oldestSlaveAgeDays, currentSlaveAgeDays());
+    oldestSlaveAgeHours = currentSlaveAgeHours();
+    oldestSlaveAgeDays = currentSlaveAgeDays();
+    oldestSlaveNo = slaveNo;
   }
   function snapshot() {
     return {
@@ -3336,12 +3333,9 @@
       state.coins += coinDelta;
       state.gems += gemDelta;
       slavesKilled = Math.max(slavesKilled, player.slaves_killed || 0);
-      oldestSlaveAgeDays = Math.max(oldestSlaveAgeDays, player.oldest_slave_age_days || 0);
-      const serverOldestHours = Math.max(player.oldest_slave_age_hours || 0, (player.oldest_slave_age_days || 0) * 24);
-      if (serverOldestHours > oldestSlaveAgeHours) {
-        oldestSlaveAgeHours = serverOldestHours;
-        oldestSlaveNo = Math.max(1, Math.floor(player.oldest_slave_no || 1));
-      }
+      oldestSlaveAgeDays = Math.max(0, Math.floor(player.oldest_slave_age_days || 0));
+      oldestSlaveAgeHours = Math.max(0, Math.floor(player.oldest_slave_age_hours || 0));
+      oldestSlaveNo = Math.max(1, Math.floor(player.oldest_slave_no || 1));
       render();
     } catch (error) {
       console.warn('Не удалось сохранить прогресс:', error);
@@ -3415,13 +3409,7 @@
     slavesKilled = player
       ? Math.max(slavesKilled, Math.floor(player.slaves_killed) || 0)
       : Math.max(Math.floor(saved.slavesKilled) || 0, slavesKilled);
-    oldestSlaveAgeDays = Math.max(Math.floor(saved.oldestSlaveAgeDays) || 0, player ? player.oldest_slave_age_days || 0 : 0);
-    const savedOldestHours = Math.max(Math.floor(saved.oldestSlaveAgeHours) || 0, (Math.floor(saved.oldestSlaveAgeDays) || 0) * 24);
-    const serverOldestHours = player ? Math.max(player.oldest_slave_age_hours || 0, (player.oldest_slave_age_days || 0) * 24) : 0;
-    oldestSlaveAgeHours = Math.max(savedOldestHours, serverOldestHours);
-    oldestSlaveNo = Math.max(1, Math.floor(serverOldestHours > savedOldestHours && player
-      ? player.oldest_slave_no || 1
-      : saved.oldestSlaveNo || (player ? player.oldest_slave_no : 1) || 1));
+    updateOldestSlaveAge();
     vipStatus = player ? !!player.vip_status : vipStatus;
     indulgeCdUntil = Math.max(0, saved.indulgeCdUntil || 0);
     trashPokes = Math.max(0, Math.floor(saved.trashPokes ?? trashPokes));
