@@ -325,8 +325,12 @@ def load_data(request: LoadRequest) -> dict[str, Any]:
             )
             if referrer:
                 connection.execute(
-                    "UPDATE players SET crystals = crystals + ? WHERE id = ?",
-                    (REFERRER_REWARD, referrer["id"]),
+                    """
+                    UPDATE players
+                    SET crystals = crystals + ?, pending_crystals = pending_crystals + ?
+                    WHERE id = ?
+                    """,
+                    (REFERRER_REWARD, REFERRER_REWARD, referrer["id"]),
                 )
         else:
             connection.execute(
