@@ -3282,7 +3282,10 @@
 
   /* ================= СОХРАНЕНИЕ И TELEGRAM ================= */
   const tg = window.Telegram && window.Telegram.WebApp;
-  const initData = tg ? tg.initData : '';
+  if (tg) {
+    try { tg.ready(); tg.expand(); } catch (e) {}
+  }
+  const initData = tg && typeof tg.initData === 'string' ? tg.initData.trim() : '';
   const startParam = tg && tg.initDataUnsafe ? tg.initDataUnsafe.start_param || '' : '';
   const referralParam = new URLSearchParams(window.location.search).get('ref') || (startParam.startsWith('ref_') ? startParam.slice(4) : '');
   const referralId = /^\d+$/.test(referralParam) ? Number(referralParam) : null;
@@ -3307,10 +3310,6 @@
   let slaveEndedAt = null;
   let slaveEndReason = null;
   let vipStatus = false;
-
-  if (tg) {
-    try { tg.ready(); tg.expand(); } catch (e) {}
-  }
 
   function isObject(value) { return value && typeof value === 'object' && !Array.isArray(value); }
   function currentSlaveAgeDays() {
@@ -3507,6 +3506,14 @@
       $('start-nickname').value = displayName;
       vipStatus = !!player.vip_status;
       render();
+    }
+    if (!initData) {
+      const message = tg
+        ? 'Telegram не передал initData. Прогресс сохраняется только на этом устройстве. Перезапустите игру кнопкой «🍾 Играть».'
+        : 'Браузерный режим: прогресс сохраняется только на этом устройстве.';
+      $('start-nickname-note').textContent = message;
+      if (onboardingComplete) say(message);
+      console.warn(message);
     }
     persistenceReady = true;
     if (saveAfterLoad) { saveAfterLoad = false; scheduleSave(); }
