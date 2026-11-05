@@ -21,7 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from telegram_init_data import TelegramInitDataError, parse, validate
 
 from db import database, init_database
-from payments import PaymentError, create_payment, create_ruble_payment, get_verified_payment
+from payments import PaymentError, create_payment, create_ruble_payment, get_verified_payment, payment_credentials_configured
 
 BASE_DIR = Path(__file__).resolve().parent
 GAME_URL = os.getenv("GAME_URL", "https://slave-game-1.onrender.com")
@@ -1001,10 +1001,14 @@ def config() -> dict[str, str]:
 
 
 @app.get("/api/health")
-def health() -> dict[str, str]:
+def health() -> dict[str, str | bool]:
     with database() as connection:
         connection.execute("SELECT 1").fetchone()
-    return {"status": "ok", "database": "postgresql"}
+    return {
+        "status": "ok",
+        "database": "postgresql",
+        "payments_configured": payment_credentials_configured(),
+    }
 
 
 @app.get("/")

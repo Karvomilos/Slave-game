@@ -24,11 +24,25 @@ class PaymentError(Exception):
 
 
 def credentials() -> tuple[str, str]:
-    shop_id = os.getenv("YOOKASSA_SHOP_ID", "").strip()
-    secret_key = os.getenv("YOOKASSA_SECRET_KEY", "").strip()
+    shop_id = next(
+        (value for name in ("YOOKASSA_SHOP_ID", "SHOP_ID", "Shop_ID") if (value := os.getenv(name, "").strip())),
+        "",
+    )
+    secret_key = next(
+        (value for name in ("YOOKASSA_SECRET_KEY", "SECRET_KEY", "Secret_key") if (value := os.getenv(name, "").strip())),
+        "",
+    )
     if not shop_id or not secret_key:
         raise PaymentError("ЮKassa не настроена: задайте YOOKASSA_SHOP_ID и YOOKASSA_SECRET_KEY")
     return shop_id, secret_key
+
+
+def payment_credentials_configured() -> bool:
+    try:
+        credentials()
+        return True
+    except PaymentError:
+        return False
 
 
 def create_payment(user_id: int, product_key: str, return_url: str) -> dict[str, Any]:
