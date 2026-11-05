@@ -331,7 +331,7 @@ def game_keyboard(referrer_id: int | None = None, include_status: bool = False) 
     rows = [
         [
             InlineKeyboardButton(
-                text="🍾 Играть",
+                text="🎮 Играть",
                 web_app=WebAppInfo(url=game_url_with_referral(referrer_id)),
             )
         ],
@@ -394,6 +394,7 @@ async def run_bot() -> None:
                 me = await bot.get_me()
                 bot_username = me.username or bot_username
                 await configure_bot_profile(bot)
+                logging.info("Inline WebApp button URL: %s", get_game_url())
                 retry_delay = 5
                 await dp.start_polling(bot)
                 logging.warning("Telegram-polling завершён; выполняется перезапуск")

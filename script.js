@@ -3509,7 +3509,7 @@
     }
     if (!initData) {
       const message = tg
-        ? 'Telegram не передал initData. Прогресс сохраняется только на этом устройстве. Перезапустите игру кнопкой «🍾 Играть».'
+        ? 'Telegram не передал initData. Прогресс сохраняется только на этом устройстве. Перезапустите игру кнопкой «🎮 Играть».'
         : 'Браузерный режим: прогресс сохраняется только на этом устройстве.';
       $('start-nickname-note').textContent = message;
       if (onboardingComplete) say(message);
