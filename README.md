@@ -68,7 +68,7 @@ git push -u origin main
 
 ## ЮKassa
 
-Кнопка **Донат**, покупка клятв и VIP уже подключены к серверному API. В Render задайте:
+Кнопка **+** возле баланса открывает пакеты клятв: 100 за 99 ₽, 500 за 449 ₽, 1000 за 899 ₽ и 3000 за 2499 ₽. Оплата проходит на странице ЮKassa; игра не запрашивает почту, телефон и другие данные для чека. В Render задайте:
 
 - `YOOKASSA_SHOP_ID` — shopId магазина;
 - `YOOKASSA_SECRET_KEY` — секретный ключ API.
@@ -76,10 +76,10 @@ git push -u origin main
 В кабинете ЮKassa укажите webhook:
 
 ```text
-https://slave-game-1.onrender.com/api/payments/yookassa
+https://slave-game-1.onrender.com/api/yookassa_webhook
 ```
 
-Нужно событие `payment.succeeded`; событие об отмене также обрабатывается. Приложение не доверяет содержимому webhook: оно повторно запрашивает платёж у ЮKassa и начисляет товар только после подтверждения. Повторная доставка webhook не дублирует начисление. Ключи используются только на backend и не попадают в браузер.
+Нужно событие `payment.succeeded`; событие об отмене также обрабатывается. Приложение не доверяет содержимому webhook: оно повторно запрашивает платёж у ЮKassa, сверяет владельца и сумму и начисляет клятвы только после подтверждения. Повторная доставка webhook не дублирует начисление. Ключи используются только на backend и не попадают в браузер. После оплаты игрок возвращается на `https://slave-game.karvomilos.workers.dev`.
 
 ## API
 
@@ -89,8 +89,9 @@ https://slave-game-1.onrender.com/api/payments/yookassa
 - `GET /api/auction` — активные лоты с уровнем, склонностью, возрастом и ценой.
 - `POST /api/auction/list` — атомарно выставляет текущего персонажа и освобождает место для нового.
 - `POST /api/auction/buy` — атомарно переводит кристаллы продавцу, а персонажа и его рейтинговый возраст — покупателю.
-- `POST /api/payments/create` — создаёт платёж для `gems_10`, `gems_60`, `gems_150` или `vip`.
-- `POST /api/payments/yookassa` — проверенный webhook начисления.
+- `POST /api/create_payment` — принимает только `amount` и `telegram_id`, создаёт redirect-платёж SDK ЮKassa и возвращает `confirmation_url`.
+- `POST /api/yookassa_webhook` — проверенный webhook начисления по курсу 1 ₽ = 1 клятва.
+- `POST /api/payments/create` и `POST /api/payments/yookassa` — совместимые адреса предыдущей версии.
 - `GET /api/leaderboard` — таблицы лидеров.
 - `GET /api/health` — проверка API и подключения к базе.
 

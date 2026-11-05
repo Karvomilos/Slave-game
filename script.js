@@ -2829,9 +2829,9 @@
       button.disabled = false;
     }
   });
-  async function buyProduct(product) {
+  async function buyProduct(amount) {
     const note = $('gem-stub');
-    if (!initData) {
+    if (!initData || !Number.isSafeInteger(telegramUserId) || telegramUserId <= 0) {
       note.textContent = 'Оплата доступна при запуске игры внутри Telegram.';
       note.classList.add('show');
       sfx.deny();
@@ -2840,8 +2840,16 @@
     note.textContent = 'Создаём платёж…';
     note.classList.add('show');
     try {
-      const payment = await apiPost('/api/payments/create', { product });
-      window.location.assign(payment.confirmation_url);
+      const response = await fetch(API_BASE + '/api/create_payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, telegram_id: telegramUserId })
+      });
+      const payment = await response.json().catch(() => ({}));
+      if (!response.ok || !payment.confirmation_url) {
+        throw new Error(payment.detail || 'Не удалось создать платёж. Попробуйте позже.');
+      }
+      window.location.href = payment.confirmation_url;
     } catch (error) {
       note.textContent = error.message;
       sfx.deny();
@@ -2862,7 +2870,7 @@
   function openDonate() { $('gem-stub').classList.remove('show'); openModal('gem-modal'); }
   $('btn-gems').addEventListener('click', openDonate);
   document.querySelectorAll('.pack').forEach(p => {
-    p.addEventListener('click', () => buyProduct('gems_' + p.dataset.pack));
+    p.addEventListener('click', () => buyProduct(Number(p.dataset.amount)));
   });
   function lastActivityLabel(value) {
     const timestamp = Date.parse(value || '');

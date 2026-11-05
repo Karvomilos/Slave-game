@@ -4,6 +4,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import urlencode, urlsplit, urlunsplit
@@ -20,7 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from telegram_init_data import TelegramInitDataError, parse, validate
 
 from db import database, init_database
-from payments import PaymentError, create_payment, get_verified_payment
+from payments import PaymentError, create_payment, create_ruble_payment, get_verified_payment
 
 BASE_DIR = Path(__file__).resolve().parent
 GAME_URL = os.getenv("GAME_URL", "https://slave-game-1.onrender.com")
@@ -261,7 +262,13 @@ class NicknameRequest(LoadRequest):
 
 
 class PaymentRequest(LoadRequest):
-    product: Literal["gems_10", "gems_60", "gems_150", "vip"]
+    product: Literal["gems_100", "gems_500", "gems_1000", "gems_3000", "gems_10", "gems_60", "gems_150", "vip"]
+
+
+class RublePaymentRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    amount: Literal[99, 449, 899, 2499]
+    telegram_id: int = Field(gt=0)
 
 
 class AuctionCreateRequest(LoadRequest):
@@ -714,17 +721,14 @@ def referral(request: LoadRequest) -> dict[str, Any]:
     }
 
 
-@app.post("/api/payments/create")
-def payment_create(request: PaymentRequest) -> dict[str, Any]:
-    user = authenticate(request.init_data)
-    try:
-        payment = create_payment(user["id"], request.product, get_game_url())
-    except PaymentError as error:
-        raise HTTPException(status_code=503, detail=str(error)) from error
+PAYMENT_RETURN_URL = "https://slave-game.karvomilos.workers.dev"
+
+
+def store_payment(user_id: int, username: str, payment: dict[str, Any]) -> None:
     with database() as connection:
         connection.execute(
             "INSERT INTO players (id, username) VALUES (?, ?) ON CONFLICT (id) DO NOTHING",
-            (user["id"], username_for(user)),
+            (user_id, username),
         )
         connection.execute(
             """
@@ -732,19 +736,35 @@ def payment_create(request: PaymentRequest) -> dict[str, Any]:
             VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                payment["id"],
-                user["id"],
-                request.product,
-                payment["amount"],
-                payment["crystals"],
-                payment["status"],
-                datetime.now(timezone.utc).isoformat(),
+                payment["id"], user_id, payment["product"], payment["amount"],
+                payment["crystals"], payment["status"], datetime.now(timezone.utc).isoformat(),
             ),
         )
         connection.commit()
+
+
+@app.post("/api/create_payment")
+def ruble_payment_create(request: RublePaymentRequest) -> dict[str, str]:
+    try:
+        payment = create_ruble_payment(request.telegram_id, request.amount, PAYMENT_RETURN_URL)
+    except PaymentError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+    store_payment(request.telegram_id, f"player_{request.telegram_id}", payment)
+    return {"confirmation_url": payment["confirmation_url"]}
+
+
+@app.post("/api/payments/create")
+def payment_create(request: PaymentRequest) -> dict[str, Any]:
+    user = authenticate(request.init_data)
+    try:
+        payment = create_payment(user["id"], request.product, get_game_url())
+    except PaymentError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+    store_payment(user["id"], username_for(user), payment)
     return payment
 
 
+@app.post("/api/yookassa_webhook")
 @app.post("/api/payments/yookassa")
 def payment_webhook(notification: PaymentNotification) -> dict[str, bool]:
     payment_id = str(notification.object.get("id", ""))
@@ -756,17 +776,28 @@ def payment_webhook(notification: PaymentNotification) -> dict[str, bool]:
         raise HTTPException(status_code=503, detail=str(error)) from error
     with database() as connection:
         stored = connection.execute(
-            "SELECT * FROM payments WHERE id = ?", (payment_id,)
+            "SELECT * FROM payments WHERE id = ? FOR UPDATE", (payment_id,)
         ).fetchone()
         if stored is None:
             raise HTTPException(status_code=404, detail="Платёж не найден")
         metadata = verified.get("metadata") or {}
-        if (
-            str(metadata.get("user_id")) != str(stored["user_id"])
-            or metadata.get("product") != stored["product"]
-        ):
+        owner_id = metadata.get("telegram_id", metadata.get("user_id"))
+        product_matches = (
+            stored["product"] == f"rub_{stored['amount']}"
+            if stored["product"].startswith("rub_")
+            else metadata.get("product") == stored["product"]
+        )
+        amount = verified.get("amount") or {}
+        try:
+            amount_matches = (
+                amount.get("currency") == "RUB"
+                and Decimal(str(amount.get("value"))) == Decimal(stored["amount"])
+            )
+        except (InvalidOperation, TypeError, ValueError):
+            amount_matches = False
+        if str(owner_id) != str(stored["user_id"]) or not product_matches or not amount_matches:
             raise HTTPException(status_code=400, detail="Данные платежа не совпадают")
-        status = verified.get("status", notification.object.get("status", "unknown"))
+        status = verified.get("status", "unknown")
         if status == "succeeded":
             updated = connection.execute(
                 "UPDATE payments SET status = ? WHERE id = ? AND status <> ? RETURNING *",
@@ -775,15 +806,19 @@ def payment_webhook(notification: PaymentNotification) -> dict[str, bool]:
             if updated:
                 if stored["crystals"]:
                     connection.execute(
-                        "UPDATE players SET crystals = crystals + ? WHERE id = ?",
-                        (stored["crystals"], stored["user_id"]),
+                        """
+                        UPDATE players
+                        SET crystals = crystals + ?, pending_crystals = pending_crystals + ?
+                        WHERE id = ?
+                        """,
+                        (stored["crystals"], stored["crystals"], stored["user_id"]),
                     )
                 if stored["product"] == "vip":
                     connection.execute(
                         "UPDATE players SET vip_status = ? WHERE id = ?",
                         (True, stored["user_id"]),
                     )
-        else:
+        elif stored["status"] != "succeeded":
             connection.execute(
                 "UPDATE payments SET status = ? WHERE id = ?", (status, payment_id)
             )
