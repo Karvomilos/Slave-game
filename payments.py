@@ -23,15 +23,17 @@ class PaymentError(Exception):
     pass
 
 
+def environment_value(*names: str) -> str:
+    normalized_names = {name.casefold() for name in names}
+    for name, value in os.environ.items():
+        if name.strip().casefold() in normalized_names and value.strip():
+            return value.strip()
+    return ""
+
+
 def credentials() -> tuple[str, str]:
-    shop_id = next(
-        (value for name in ("YOOKASSA_SHOP_ID", "SHOP_ID", "Shop_ID") if (value := os.getenv(name, "").strip())),
-        "",
-    )
-    secret_key = next(
-        (value for name in ("YOOKASSA_SECRET_KEY", "SECRET_KEY", "Secret_key") if (value := os.getenv(name, "").strip())),
-        "",
-    )
+    shop_id = environment_value("YOOKASSA_SHOP_ID", "SHOP_ID")
+    secret_key = environment_value("YOOKASSA_SECRET_KEY", "SECRET_KEY")
     if not shop_id or not secret_key:
         raise PaymentError("ЮKassa не настроена: задайте YOOKASSA_SHOP_ID и YOOKASSA_SECRET_KEY")
     return shop_id, secret_key
