@@ -11,6 +11,8 @@ services:
         sync: false
       - key: BOT_TOKEN
         sync: false
+      - key: BOT_USERNAME
+        value: BottleGame_FDBot
       - key: RUN_BOT
         value: "1"
       - key: GAME_URL

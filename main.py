@@ -12,7 +12,7 @@ import httpx
 from aiogram import Bot, Dispatcher, F
 from aiogram.exceptions import TelegramRetryAfter
 from aiogram.filters import CommandStart
-from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
+from aiogram.types import BotCommand, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -27,7 +27,7 @@ GAME_URL = os.getenv("GAME_URL", "https://slave-game-1.onrender.com")
 GAME_URL_FILE = BASE_DIR / "game_url.txt"
 REFERRER_REWARD = 25
 REFERRED_PLAYER_REWARD = 10
-bot_username = os.getenv("BOT_USERNAME", "").strip().lstrip("@")
+bot_username = os.getenv("BOT_USERNAME", "BottleGame_FDBot").strip().lstrip("@")
 
 
 def get_game_url() -> str:
@@ -278,21 +278,79 @@ class PaymentNotification(BaseModel):
     object: dict[str, Any]
 
 
+BOT_NAME = "Бутылочка · Комната нижнего"
+BOT_SHORT_DESCRIPTION = "Флирт и подарки в «Бутылочке». BDSM-тамагочи в «Комнате нижнего». Социальный хаб 18+."
+BOT_DESCRIPTION = (
+    "Социальный хаб 18+ с двумя настроениями.\n\n"
+    "🍾 «Бутылочка» — знакомства, флирт и подарки за клятвы.\n"
+    "⛓ «Комната нижнего» — мрачный BDSM-тамагочи о дисциплине, уходе и власти.\n\n"
+    "Играйте, проверяйте цены и правила перед покупками."
+)
+START_TEXT = (
+    "Добро пожаловать в социальный хаб 18+.\n\n"
+    "🍾 «Бутылочка» — знакомства, флирт и подарки.\n"
+    "⛓ «Комната нижнего» — хардкорный BDSM-тамагочи.\n\n"
+    "Нажми «Играть» — или сначала посмотри цены и правила."
+)
+PRICES_TEXT = (
+    "💎 Клятвы\n"
+    "• 10 клятв — 99 ₽\n"
+    "• 60 клятв — 449 ₽\n"
+    "• 150 клятв — 899 ₽\n\n"
+    "👑 VIP-магазин\n"
+    "• Стартовый пак — 149 ₽\n"
+    "• VIP 1 «Палач» — 499 ₽\n"
+    "• VIP 2 «Инквизитор» — 1 499 ₽\n"
+    "• VIP 3 «Легенда» — 2 999 ₽\n\n"
+    "Состав каждого VIP-пака указан на его карточке в игре."
+)
+OFFER_TEXT = (
+    "📜 Публичная оферта\n\n"
+    "Сервис предназначен только для совершеннолетних (18+). Начиная игру или покупку, "
+    "пользователь подтверждает свой возраст и принимает правила.\n\n"
+    "Клятвы, подарки и VIP-статусы являются цифровым игровым контентом, а не валютой, "
+    "инвестицией или способом заработка. Они не обмениваются на деньги. До оплаты проверьте "
+    "состав и стоимость товара. Цены указаны в рублях.\n\n"
+    "Запрещены обман других игроков, взлом, автоматизация платежей и использование сервиса "
+    "для нарушения закона. Администрация может ограничить доступ при нарушении правил."
+)
+PRIVACY_TEXT = (
+    "🔒 Политика конфиденциальности\n\n"
+    "Для работы игры сохраняются Telegram ID, выбранный ник, игровой прогресс, покупки и "
+    "реферальные связи. Telegram-юзернейм публично не используется как игровой ник без вашего выбора.\n\n"
+    "Данные нужны для авторизации, сохранения прогресса, рейтингов, доставки цифровых товаров "
+    "и уведомлений бота. Платёжные данные и карты не хранятся в игре: оплату обрабатывает ЮKassa.\n\n"
+    "Данные хранятся в Supabase PostgreSQL и не продаются третьим лицам. Не публикуйте в игре "
+    "пароли, платёжные реквизиты и другую чувствительную информацию."
+)
+
 dp = Dispatcher()
 
 
-def game_keyboard(referrer_id: int | None = None) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="Воспитать",
-                    web_app=WebAppInfo(url=game_url_with_referral(referrer_id)),
-                ),
-                InlineKeyboardButton(text="Показатели", callback_data="status"),
-            ]
-        ]
-    )
+def game_keyboard(referrer_id: int | None = None, include_status: bool = False) -> InlineKeyboardMarkup:
+    rows = [
+        [
+            InlineKeyboardButton(
+                text="🍾 Играть",
+                web_app=WebAppInfo(url=game_url_with_referral(referrer_id)),
+            )
+        ],
+        [InlineKeyboardButton(text="💎 Цены", callback_data="prices")],
+        [
+            InlineKeyboardButton(text="📜 Оферта", callback_data="offer"),
+            InlineKeyboardButton(text="🔒 Политика", callback_data="privacy"),
+        ],
+    ]
+    if include_status:
+        rows.append([InlineKeyboardButton(text="📊 Показатели", callback_data="status")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+async def configure_bot_profile(bot: Bot) -> None:
+    await bot.set_my_name(BOT_NAME)
+    await bot.set_my_short_description(BOT_SHORT_DESCRIPTION)
+    await bot.set_my_description(BOT_DESCRIPTION)
+    await bot.set_my_commands([BotCommand(command="start", description="🍾 Главное меню")])
 
 
 @dp.message(CommandStart())
@@ -302,10 +360,15 @@ async def start(message: Message) -> None:
     bot_username = me.username or bot_username
     argument = (message.text or "").partition(" ")[2]
     referrer_id = int(argument[4:]) if argument.startswith("ref_") and argument[4:].isdigit() else None
-    await message.answer(
-        "Я Ваш виртуальный слуга, крупно желающий стать рыцарем. Мне нужно чуть-чуть дисциплины..",
-        reply_markup=game_keyboard(referrer_id),
-    )
+    await message.answer(START_TEXT, reply_markup=game_keyboard(referrer_id))
+
+
+@dp.callback_query(F.data.in_({"prices", "offer", "privacy"}))
+async def show_info(callback: CallbackQuery) -> None:
+    text = {"prices": PRICES_TEXT, "offer": OFFER_TEXT, "privacy": PRIVACY_TEXT}[callback.data]
+    if callback.message:
+        await callback.message.answer(text, reply_markup=game_keyboard())
+    await callback.answer()
 
 
 @dp.callback_query(F.data == "status")
@@ -314,9 +377,9 @@ async def show_status(callback: CallbackQuery) -> None:
         row = connection.execute(
             "SELECT * FROM players WHERE id = ?", (callback.from_user.id,)
         ).fetchone()
-    text = player_status_text(row) if row else "Игровой профиль ещё не создан. Нажмите «Воспитать», чтобы начать."
+    text = player_status_text(row) if row else "Игровой профиль ещё не создан. Нажмите «Играть», чтобы начать."
     if callback.message:
-        await callback.message.answer(text, reply_markup=game_keyboard())
+        await callback.message.answer(text, reply_markup=game_keyboard(include_status=True))
     await callback.answer()
 
 
@@ -330,6 +393,7 @@ async def run_bot() -> None:
             try:
                 me = await bot.get_me()
                 bot_username = me.username or bot_username
+                await configure_bot_profile(bot)
                 retry_delay = 5
                 await dp.start_polling(bot)
                 logging.warning("Telegram-polling завершён; выполняется перезапуск")
@@ -430,7 +494,9 @@ async def offline_notifications() -> None:
                 events = await asyncio.to_thread(collect_offline_events)
                 for event in events:
                     try:
-                        await bot.send_message(event["user_id"], event["text"], reply_markup=game_keyboard())
+                        await bot.send_message(
+                            event["user_id"], event["text"], reply_markup=game_keyboard(include_status=True)
+                        )
                     except Exception as error:
                         logging.warning("Не удалось уведомить игрока %s: %s", event["user_id"], error)
                     await asyncio.sleep(0.05)
