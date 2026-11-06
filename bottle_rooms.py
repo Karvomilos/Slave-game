@@ -20,7 +20,7 @@ BOT_SESSION_DURATION = (600, 900)
 BOT_RETURN_DELAY = (120, 300)
 BOT_CHAT_COOLDOWN = (1200, 1800)
 MUSIC_COST = 3
-MAX_MUSIC_SIZE = 5 * 1024 * 1024
+MAX_MUSIC_SIZE = 20 * 1024 * 1024
 FAKE_GODDESS_DIR = Path(__file__).resolve().parent / "assets" / "fake_goddess"
 BOT_NAMES = ["Алина", "Мира", "Виктория", "София", "Даша", "Лера", "Ева", "Кира", "Алёна", "Марина", "Ника", "Тая"]
 BOT_SPIN_PHRASES = ["Так, ну наконец-то 😄", "Ну, посмотрим, что ты выберешь…", "Я даже не знаю, к чему готовиться 😅"]
@@ -509,7 +509,7 @@ class BottleRoomManager:
             except (binascii.Error, ValueError) as error:
                 raise RoomError("Не удалось прочитать MP3") from error
             if not content or len(content) > MAX_MUSIC_SIZE:
-                raise RoomError("Размер MP3 должен быть от 1 байта до 5 МБ")
+                raise RoomError("Размер MP3 должен быть от 1 байта до 20 МБ")
             return source, name, content
         raise RoomError("Выберите MP3-файл или прямую ссылку")
 
