@@ -59,6 +59,9 @@ def init_database() -> None:
                 slaves_killed INTEGER NOT NULL DEFAULT 0,
                 current_slave_stats TEXT NOT NULL DEFAULT '{}',
                 vip_status BOOLEAN NOT NULL DEFAULT FALSE,
+                vip_level INTEGER NOT NULL DEFAULT 0,
+                starter_owned BOOLEAN NOT NULL DEFAULT FALSE,
+                pending_coins INTEGER NOT NULL DEFAULT 0,
                 oldest_slave_age_days INTEGER NOT NULL DEFAULT 0,
                 oldest_slave_age_hours INTEGER NOT NULL DEFAULT 0,
                 oldest_slave_no INTEGER NOT NULL DEFAULT 1,
@@ -85,6 +88,15 @@ def init_database() -> None:
         )
         connection.execute(
             "ALTER TABLE players ADD COLUMN IF NOT EXISTS pending_crystals INTEGER NOT NULL DEFAULT 0"
+        )
+        connection.execute(
+            "ALTER TABLE players ADD COLUMN IF NOT EXISTS vip_level INTEGER NOT NULL DEFAULT 0"
+        )
+        connection.execute(
+            "ALTER TABLE players ADD COLUMN IF NOT EXISTS starter_owned BOOLEAN NOT NULL DEFAULT FALSE"
+        )
+        connection.execute(
+            "ALTER TABLE players ADD COLUMN IF NOT EXISTS pending_coins INTEGER NOT NULL DEFAULT 0"
         )
         connection.execute(
             "ALTER TABLE players ADD COLUMN IF NOT EXISTS rating_reset_pending BOOLEAN NOT NULL DEFAULT FALSE"

@@ -308,6 +308,9 @@
   let gone = false; // подопытный мёртв/сбежал — ждём нового
   let face = 'calm';
   let onboardingComplete = false;
+  let hubComplete = false;
+  let currentScreen = 'hub';
+  let avatarMode = 'pet';
 
   resetSlaveGear();
   function resetSlaveGear() {
@@ -481,7 +484,7 @@
   const $ = id => document.getElementById(id);
 
   function blockBeforeOnboarding(event) {
-    if (onboardingComplete || event.target.closest('#start-modal')) return;
+    if (onboardingComplete || currentScreen === 'hub' || event.target.closest('#start-modal, .overlay.open')) return;
     event.preventDefault();
     event.stopImmediatePropagation();
   }
@@ -509,10 +512,12 @@
   }
   function syncSound() {
     if (masterGain) masterGain.gain.setTargetAtTime(soundOn ? volume : 0, AC.currentTime, 0.02);
-    $('btn-sound').textContent = soundOn ? `Звук: ${Math.round(volume * 100)}%` : 'Звук: выкл';
-    $('btn-sound').classList.toggle('off', !soundOn);
-    $('volume-range').value = Math.round(volume * 100);
-    $('volume-value').textContent = Math.round(volume * 100) + '%';
+    for (const prefix of ['', 'hub-']) {
+      $(prefix + 'btn-sound').textContent = soundOn ? `Звук: ${Math.round(volume * 100)}%` : 'Звук: выкл';
+      $(prefix + 'btn-sound').classList.toggle('off', !soundOn);
+      $(prefix + 'volume-range').value = Math.round(volume * 100);
+      $(prefix + 'volume-value').textContent = Math.round(volume * 100) + '%';
+    }
     try { localStorage.setItem('p001_volume', String(volume)); } catch (e) {}
   }
   function env(g, t, a, d, peak) {
@@ -743,7 +748,38 @@
       }
     });
   }
+  function hubPad(root, t, dur = 11) {
+    if (!soundOn || !musicBus) return;
+    const c = audio();
+    [1, 1.1892, 1.4983].forEach((ratio, index) => {
+      const o = c.createOscillator(), g = c.createGain(), f = c.createBiquadFilter();
+      o.type = index === 0 ? 'sine' : 'triangle';
+      o.frequency.value = root * ratio;
+      o.detune.value = index * 3 - 3;
+      f.type = 'lowpass'; f.frequency.value = 480;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.028, t + 3.2);
+      g.gain.setValueAtTime(0.028, t + dur - 3.8);
+      g.gain.linearRampToValueAtTime(0.0001, t + dur);
+      o.connect(f).connect(g).connect(musicBus);
+      o.start(t); o.stop(t + dur + 0.1);
+    });
+  }
+  function playHubStep(step, t) {
+    const roots = [55, 49, 43.65, 41.2];
+    const root = roots[Math.floor(step / 32) % roots.length];
+    if (step % 32 === 0) {
+      pluck(root, t, 9.5, 0.16, 'sine');
+      hubPad(root * 2, t);
+    }
+    if (step % 64 === 32) noiseAt(t, 2.8, 310, 0.014, 'lowpass', musicBus);
+    if (step % 128 === 88) {
+      pluck(root * 8, t, 5.8, 0.026, 'sine');
+      pluck(root * 12, t + 0.7, 6.4, 0.012, 'sine');
+    }
+  }
   function playStep(step, t) {
+    if (currentScreen === 'hub') { playHubStep(step, t); return; }
     const bar = Math.floor(step / 8) % 4;
     const s = step % 8;
     const aggr = state ? state.aggr : 0;
@@ -770,26 +806,28 @@
     if (s === 5 && Math.random() < 0.06) whisper(t);
   }
 
-  $('btn-sound').addEventListener('click', () => {
-    soundOn = !soundOn;
-    if (soundOn) {
-      volume = lastVolume;
-      startAmbient();
-    }
-    syncSound();
-  });
-  $('volume-range').addEventListener('input', event => {
-    volume = Number(event.target.value) / 100;
-    soundOn = volume > 0;
-    if (soundOn) {
-      lastVolume = volume;
-      startAmbient();
-    }
-    syncSound();
-  });
+  for (const prefix of ['', 'hub-']) {
+    $(prefix + 'btn-sound').addEventListener('click', () => {
+      soundOn = !soundOn;
+      if (soundOn) {
+        volume = lastVolume;
+        startAmbient();
+      }
+      syncSound();
+    });
+    $(prefix + 'volume-range').addEventListener('input', event => {
+      volume = Number(event.target.value) / 100;
+      soundOn = volume > 0;
+      if (soundOn) {
+        lastVolume = volume;
+        startAmbient();
+      }
+      syncSound();
+    });
+  }
   syncSound();
   window.addEventListener('pointerdown', () => {
-    if (onboardingComplete && soundOn) { audio(); startAmbient(); }
+    if (soundOn) { audio(); startAmbient(); }
   });
   document.addEventListener('visibilitychange', () => {
     if (!AC) return;
@@ -797,7 +835,7 @@
       if (AC.state !== 'closed') AC.suspend().catch(() => {});
       return;
     }
-    if (!onboardingComplete || !soundOn) return;
+    if (!soundOn) return;
     AC.resume().then(() => {
       if (document.hidden || !soundOn) return;
       gridStart = AC.currentTime + 0.1;
@@ -813,6 +851,7 @@
   function applyCensorship() {
     document.body.classList.toggle('safe-mode', censorshipOn);
     $('censor-toggle').checked = censorshipOn;
+    $('hub-censor-toggle').checked = censorshipOn;
     document.querySelectorAll('[data-safe]').forEach(element => {
       if (!element.dataset.uncensored) element.dataset.uncensored = element.innerHTML;
       element.innerHTML = censorshipOn ? element.dataset.safe : element.dataset.uncensored;
@@ -826,42 +865,147 @@
     if ($('leaderboard-modal').classList.contains('open')) loadLeaderboard();
     render();
   }
-  $('censor-toggle').addEventListener('change', () => {
-    censorshipOn = $('censor-toggle').checked;
-    try { localStorage.setItem('p001_censorship', censorshipOn ? '1' : '0'); } catch (e) {}
-    applyCensorship();
-    say(censorshipOn ? 'Детский режим включён. Термины и реплики смягчены.' : 'Цензура отключена.');
-  });
+  for (const id of ['censor-toggle', 'hub-censor-toggle']) {
+    $(id).addEventListener('change', event => {
+      censorshipOn = event.target.checked;
+      try { localStorage.setItem('p001_censorship', censorshipOn ? '1' : '0'); } catch (e) {}
+      applyCensorship();
+      say(censorshipOn ? 'Детский режим включён. Термины и реплики смягчены.' : 'Цензура отключена.');
+    });
+  }
 
   function setMoreMenu(open) {
     $('more-menu').hidden = !open;
     $('btn-more').setAttribute('aria-expanded', String(open));
   }
+  function setHubMoreMenu(open) {
+    $('hub-more-menu').hidden = !open;
+    $('hub-btn-more').setAttribute('aria-expanded', String(open));
+  }
   $('btn-more').addEventListener('click', () => setMoreMenu($('more-menu').hidden));
+  $('hub-btn-more').addEventListener('click', () => setHubMoreMenu($('hub-more-menu').hidden));
   $('btn-profile').addEventListener('click', () => setMoreMenu(false));
   $('btn-referral').addEventListener('click', () => setMoreMenu(false));
   $('btn-leaderboard').addEventListener('click', () => setMoreMenu(false));
-  $('btn-leave').addEventListener('click', async () => {
+  for (const [hubId, gameId] of [['hub-btn-profile', 'btn-profile'], ['hub-btn-referral', 'btn-referral'], ['hub-btn-leaderboard', 'btn-leaderboard']]) {
+    $(hubId).addEventListener('click', () => { setHubMoreMenu(false); $(gameId).click(); });
+  }
+
+  function telegramPhotoUrl() {
+    const value = tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user.photo_url : '';
+    try { return value && new URL(value).protocol === 'https:' ? value : ''; } catch (e) { return ''; }
+  }
+  function petAvatarClone() {
+    const avatar = pet.cloneNode(true);
+    avatar.removeAttribute('id');
+    avatar.removeAttribute('title');
+    avatar.style.cssText = '';
+    avatar.classList.add('avatar-pet', 'profile-pet');
+    avatar.querySelectorAll('[id]').forEach(element => {
+      if (element.tagName.toLowerCase() !== 'filter') element.removeAttribute('id');
+    });
+    return avatar;
+  }
+  function fillAvatarElement(element) {
+    const photo = avatarMode === 'telegram' ? telegramPhotoUrl() : '';
+    if (photo) {
+      const image = document.createElement('img');
+      image.src = photo;
+      image.alt = 'Фото профиля Telegram';
+      image.referrerPolicy = 'no-referrer';
+      image.addEventListener('error', () => { avatarMode = 'pet'; renderAvatars(); }, { once: true });
+      element.replaceChildren(image);
+    } else {
+      element.replaceChildren(petAvatarClone());
+    }
+  }
+  function renderAvatars() {
+    fillAvatarElement($('hub-avatar'));
+    if ($('avatar-modal').classList.contains('open')) fillAvatarElement($('avatar-preview'));
+    if ($('profile-modal').classList.contains('open')) renderProfile();
+  }
+  function openAvatarModal() {
+    fillAvatarElement($('avatar-preview'));
+    $('avatar-use-telegram').disabled = !telegramPhotoUrl();
+    $('avatar-note').textContent = telegramPhotoUrl() ? '' : 'Telegram не передал фото. Можно использовать внешний вид питомца.';
+    openModal('avatar-modal');
+  }
+  function chooseAvatar(mode) {
+    if (mode === 'telegram' && !telegramPhotoUrl()) { sfx.deny(); return; }
+    avatarMode = mode;
+    renderAvatars();
+    fillAvatarElement($('avatar-preview'));
+    $('avatar-note').textContent = mode === 'telegram' ? 'Используется фото Telegram.' : 'Теперь аватар повторяет внешний вид питомца.';
+    scheduleSave();
+    sfx.coin();
+  }
+  $('btn-avatar').addEventListener('click', () => { setMoreMenu(false); openAvatarModal(); });
+  $('hub-btn-avatar').addEventListener('click', () => { setHubMoreMenu(false); openAvatarModal(); });
+  $('avatar-use-telegram').addEventListener('click', () => chooseAvatar('telegram'));
+  $('avatar-use-pet').addEventListener('click', () => chooseAvatar('pet'));
+
+  function showScreen(screen) {
+    currentScreen = screen;
+    $('hub-screen').hidden = screen !== 'hub';
+    $('game-screen').hidden = screen !== 'slave';
     setMoreMenu(false);
+    setHubMoreMenu(false);
+    if (screen === 'hub') document.querySelectorAll('.overlay.open').forEach(overlay => overlay.classList.remove('open'));
+    if (AC) { gridStart = AC.currentTime + 0.12; stepCount = 0; }
+    renderAvatars();
+    window.scrollTo(0, 0);
+  }
+  function updateHubAccount() {
+    $('hub-display-name').textContent = displayName;
+    $('hub-registration').hidden = hubComplete;
+    $('hub-profile-summary').hidden = !hubComplete;
+    $('age18').checked = hubComplete || $('age18').checked;
+  }
+  async function confirmHubRegistration() {
+    if (hubComplete) return true;
+    if (!$('age18').checked) {
+      $('start-nickname-note').textContent = 'Подтвердите, что вам есть 18 лет.';
+      sfx.deny();
+      return false;
+    }
+    try {
+      await requestNickname($('start-nickname').value);
+      hubComplete = true;
+      $('start-nickname-note').textContent = '';
+      updateHubAccount();
+      scheduleSave();
+      return true;
+    } catch (error) {
+      $('start-nickname-note').textContent = error.message;
+      sfx.deny();
+      return false;
+    }
+  }
+  $('age18').addEventListener('change', () => { $('start-nickname-note').textContent = ''; });
+  $('hub-bottle').addEventListener('click', async () => {
+    if (await confirmHubRegistration()) $('hub-room-note').textContent = 'Набор в комнаты...';
+  });
+  $('hub-slave').addEventListener('click', async () => {
+    if (!await confirmHubRegistration()) return;
+    $('hub-room-note').textContent = '';
+    showScreen('slave');
+    if (!onboardingComplete) openModal('start-modal');
+    else if (gone && slaveEndReason === 'death') openModal('death');
+    else if (gone && slaveEndReason === 'escape') openModal('escape-modal');
+    if (soundOn) { audio(); startAmbient(); }
+  });
+  $('btn-leave').addEventListener('click', async () => {
     if (persistenceReady) {
       storeLocalProgress();
       if (initData && !saveInFlight) await saveProgress();
     }
-    try {
-      const response = await fetch(API_BASE + '/api/config');
-      if (!response.ok) throw new Error('HTTP ' + response.status);
-      const config = await response.json();
-      if (tg && tg.openTelegramLink) tg.openTelegramLink(config.bot_url);
-      else window.location.assign(config.bot_url);
-    } catch (error) {
-      say('Не удалось открыть чат с ботом. Попробуйте ещё раз.');
-    }
+    showScreen('hub');
   });
   document.addEventListener('pointerdown', event => {
-    if (!event.target.closest('.more-wrap')) setMoreMenu(false);
+    if (!event.target.closest('.more-wrap')) { setMoreMenu(false); setHubMoreMenu(false); }
   });
   document.addEventListener('keydown', event => {
-    if (event.key === 'Escape') setMoreMenu(false);
+    if (event.key === 'Escape') { setMoreMenu(false); setHubMoreMenu(false); }
   });
 
   /* ================= РЕНДЕР ================= */
@@ -885,6 +1029,8 @@
     }
     $('v-coins').textContent = state.coins;
     $('v-gems').textContent = state.gems;
+    $('hub-v-gems').textContent = state.gems;
+    updateHubAccount();
     $('rat-family').setAttribute('opacity', artifacts.ratking ? 1 : 0);
 
     const m = totalMult();
@@ -1053,15 +1199,7 @@
     $('profile-card-name').textContent = 'Карточка: ' + PROFILE_CARDS[profileCard].name;
     $('profile-nickname-price').textContent = nicknameChanges ? 'Смена ника: 500 клятв' : 'Первая смена ника бесплатно';
     $('profile-card').className = 'profile-card' + (profileCard === 'plain' ? '' : ' card-' + profileCard);
-    const avatar = pet.cloneNode(true);
-    avatar.removeAttribute('id');
-    avatar.removeAttribute('title');
-    avatar.style.cssText = '';
-    avatar.classList.add('profile-pet');
-    avatar.querySelectorAll('[id]').forEach(element => {
-      if (element.tagName.toLowerCase() !== 'filter') element.removeAttribute('id');
-    });
-    $('profile-avatar').replaceChildren(avatar);
+    fillAvatarElement($('profile-avatar'));
   }
   document.querySelectorAll('button.buy[data-outfit]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1510,6 +1648,7 @@
     const dignityFactor = spiritBroken ? 0.5 : 0.5 + clamp(state.dignity) / 100;
     let gain = Math.max(2, Math.round(4 * totalMult() * comfortMult() * dignityFactor));
     if (pain) gain = Math.round(gain * 1.5); // фетиш «Боль»: порка доходнее
+    gain = Math.round(gain * [1, 2, 3, 5][vipLevel]);
     state.hp -= (pain ? 7.5 : 5) * dmgFactor();
     state.dignity -= 8; state.mood -= 3; state.fear += 6;
     state.coins += gain;
@@ -2783,6 +2922,14 @@
     nicknameChanges = Math.max(0, Math.floor(player.nickname_changes || 0));
     state.coins = player.coins;
     state.gems = player.crystals;
+    vipStatus = !!player.vip_status;
+    vipLevel = Math.max(0, Math.min(3, Math.floor(player.vip_level || 0)));
+    starterOwned = !!player.starter_owned;
+    if (starterOwned) {
+      owned.collar = true;
+      $('collar').setAttribute('opacity', 1);
+    }
+    if (vipLevel >= 2) ownedOutfits.armor = true;
     if (player.rating_reset_applied) {
       oldestSlaveAgeDays = 0;
       oldestSlaveAgeHours = 0;
@@ -2855,20 +3002,37 @@
       sfx.deny();
     }
   }
-  $('btn-vip').addEventListener('click', () => {
+  function openVip() {
     $('vip-store-note').textContent = '';
     openModal('vip-modal');
     sfx.coin();
-  });
+  }
+  $('btn-vip').addEventListener('click', openVip);
+  $('hub-btn-vip').addEventListener('click', openVip);
   document.querySelectorAll('.vip-buy').forEach(button => {
-    button.addEventListener('click', () => {
-      const product = button.closest('.vip-product').querySelector('h3').textContent;
-      $('vip-store-note').textContent = `${product}: оплата будет доступна после подключения ЮKassa.`;
-      sfx.coin();
+    button.addEventListener('click', async () => {
+      const note = $('vip-store-note');
+      if (!initData) {
+        note.textContent = 'Оплата доступна при запуске игры внутри Telegram.';
+        sfx.deny();
+        return;
+      }
+      button.disabled = true;
+      note.textContent = 'Создаём платёж…';
+      try {
+        const payment = await apiPost('/api/payments/create', { product: button.dataset.vipProduct });
+        if (!payment.confirmation_url) throw new Error('Не удалось получить ссылку на оплату.');
+        window.location.href = payment.confirmation_url;
+      } catch (error) {
+        note.textContent = error.message;
+        button.disabled = false;
+        sfx.deny();
+      }
     });
   });
   function openDonate() { $('gem-stub').classList.remove('show'); openModal('gem-modal'); }
   $('btn-gems').addEventListener('click', openDonate);
+  $('hub-btn-gems').addEventListener('click', openDonate);
   document.querySelectorAll('.pack').forEach(p => {
     p.addEventListener('click', () => buyProduct(Number(p.dataset.amount)));
   });
@@ -2939,20 +3103,8 @@
       sfx.coin();
     });
   });
-  $('age18').addEventListener('change', e => { $('btn-start').disabled = !e.target.checked; });
-  $('btn-start').addEventListener('click', async () => {
-    if (!$('age18').checked || onboardingComplete) { sfx.deny(); return; }
-    const button = $('btn-start');
-    button.disabled = true;
-    try {
-      await requestNickname($('start-nickname').value);
-    } catch (error) {
-      $('start-nickname-note').textContent = error.message;
-      button.disabled = false;
-      sfx.deny();
-      return;
-    }
-    $('start-nickname-note').textContent = '';
+  $('btn-start').addEventListener('click', () => {
+    if (onboardingComplete || currentScreen !== 'slave') { sfx.deny(); return; }
     $('face-haggard').setAttribute('opacity', face === 'haggard' ? 1 : 0);
     if (face === 'bold') {
       browL.setAttribute('transform', 'rotate(10 91 32)');
@@ -2995,7 +3147,7 @@
 
   /* ---------- тики ---------- */
   setInterval(() => {
-    if (!onboardingComplete || gone) return;
+    if (currentScreen !== 'slave' || !onboardingComplete || gone) return;
     state.food -= owned.gag ? 0.9 : 0.6; // с кляпом ест на бегу — сытость тает быстрее
     state.mood -= 0.4;
     if (state.mood < 40) {
@@ -3318,6 +3470,8 @@
   let slaveEndedAt = null;
   let slaveEndReason = null;
   let vipStatus = false;
+  let vipLevel = 0;
+  let starterOwned = false;
 
   function isObject(value) { return value && typeof value === 'object' && !Array.isArray(value); }
   function currentSlaveAgeDays() {
@@ -3333,7 +3487,7 @@
   }
   function snapshot() {
     return {
-      version: 1, slaveNo, slaveUid, state: { ...state }, fetish, rareFetish, spiritBroken, face, onboardingComplete,
+      version: 1, slaveNo, slaveUid, state: { ...state }, fetish, rareFetish, spiritBroken, face, onboardingComplete, hubComplete, avatarMode,
       owned: { ...owned }, ownedOutfits: { ...ownedOutfits }, equipped: { ...equipped },
       ownedProfileCards: { ...ownedProfileCards }, profileCard, displayName, nicknameChanges,
       beltLevel, beltWorn, beltBroken, baseMult,
@@ -3481,12 +3635,12 @@
     pet.classList.toggle('dead', gone && slaveEndReason === 'death');
     pet.classList.toggle('escape', gone && slaveEndReason === 'escape');
     onboardingComplete = onboardingComplete || saved.onboardingComplete === true;
+    hubComplete = hubComplete || saved.hubComplete === true || saved.onboardingComplete === true;
+    if (['pet', 'telegram'].includes(saved.avatarMode)) avatarMode = saved.avatarMode;
     if (onboardingComplete) {
       document.body.classList.add('game-ready');
       closeModal('start-modal');
     }
-    if (gone && slaveEndReason === 'death') openModal('death');
-    if (gone && slaveEndReason === 'escape') openModal('escape-modal');
     applyOutfit(); applyMistress(); applyBody(); applyDecor(); opLabel(); render();
   }
 
@@ -3549,7 +3703,11 @@
   applyBody();
   opLabel();
   applyCensorship();
-  loadSavedProgress();
+  showScreen('hub');
+  loadSavedProgress().finally(() => {
+    updateHubAccount();
+    renderAvatars();
+  });
 
   // отладочный доступ для тестов
   window.__game = {

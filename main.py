@@ -24,7 +24,7 @@ from db import database, init_database
 from payments import PaymentError, create_payment, create_ruble_payment, get_verified_payment, payment_credentials_configured
 
 BASE_DIR = Path(__file__).resolve().parent
-GAME_URL = os.getenv("GAME_URL", "https://slave-game-1.onrender.com")
+GAME_URL = os.getenv("GAME_URL", "https://slave-game.karvomilos.workers.dev/")
 GAME_URL_FILE = BASE_DIR / "game_url.txt"
 REFERRER_REWARD = 25
 REFERRED_PLAYER_REWARD = 10
@@ -99,6 +99,8 @@ def player_dict(row: Any) -> dict[str, Any]:
         "slaves_killed": row["slaves_killed"],
         "current_slave_stats": parse_snapshot(row["current_slave_stats"]),
         "vip_status": bool(row["vip_status"]),
+        "vip_level": row["vip_level"],
+        "starter_owned": bool(row["starter_owned"]),
         "oldest_slave_age_days": row["oldest_slave_age_days"],
         "oldest_slave_age_hours": row["oldest_slave_age_hours"],
         "oldest_slave_no": row["oldest_slave_no"],
@@ -262,7 +264,7 @@ class NicknameRequest(LoadRequest):
 
 
 class PaymentRequest(LoadRequest):
-    product: Literal["gems_100", "gems_500", "gems_1000", "gems_3000", "gems_10", "gems_60", "gems_150", "vip"]
+    product: Literal["gems_100", "gems_500", "gems_1000", "gems_3000", "gems_10", "gems_60", "gems_150", "starter", "vip_1", "vip_2", "vip_3", "vip"]
 
 
 class RublePaymentRequest(BaseModel):
@@ -577,7 +579,7 @@ def load_data(request: LoadRequest) -> dict[str, Any]:
                 )
         else:
             connection.execute(
-                "UPDATE players SET username = ?, pending_crystals = 0, rating_reset_pending = FALSE, last_seen = NOW() WHERE id = ?",
+                "UPDATE players SET username = ?, pending_crystals = 0, pending_coins = 0, rating_reset_pending = FALSE, last_seen = NOW() WHERE id = ?",
                 (username, user["id"]),
             )
         connection.commit()
@@ -634,14 +636,14 @@ def save_data(request: SaveRequest) -> dict[str, Any]:
         connection.execute(
             """
             UPDATE players
-            SET username = ?, coins = ?, crystals = ?, pending_crystals = 0, slaves_killed = ?,
+            SET username = ?, coins = ?, crystals = ?, pending_crystals = 0, pending_coins = 0, slaves_killed = ?,
                 current_slave_stats = ?, vip_status = ?, rating_reset_pending = FALSE, last_seen = NOW(),
                 oldest_slave_age_days = ?, oldest_slave_no = ?, oldest_slave_age_hours = ?
             WHERE id = ?
             """,
             (
-                username_for(user), stats.coins, stats.crystals + row["pending_crystals"],
-                stats.slaves_killed, json.dumps(saved_stats, ensure_ascii=False), stats.vip_status,
+                username_for(user), stats.coins + row["pending_coins"], stats.crystals + row["pending_crystals"],
+                stats.slaves_killed, json.dumps(saved_stats, ensure_ascii=False), row["vip_status"],
                 oldest_days, oldest_no, oldest_age_hours, user["id"],
             ),
         )
@@ -757,7 +759,7 @@ def ruble_payment_create(request: RublePaymentRequest) -> dict[str, str]:
 def payment_create(request: PaymentRequest) -> dict[str, Any]:
     user = authenticate(request.init_data)
     try:
-        payment = create_payment(user["id"], request.product, get_game_url())
+        payment = create_payment(user["id"], request.product, PAYMENT_RETURN_URL)
     except PaymentError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
     store_payment(user["id"], username_for(user), payment)
@@ -813,10 +815,20 @@ def payment_webhook(notification: PaymentNotification) -> dict[str, bool]:
                         """,
                         (stored["crystals"], stored["crystals"], stored["user_id"]),
                     )
-                if stored["product"] == "vip":
+                if stored["product"] == "starter":
                     connection.execute(
-                        "UPDATE players SET vip_status = ? WHERE id = ?",
-                        (True, stored["user_id"]),
+                        """
+                        UPDATE players
+                        SET coins = coins + 500, pending_coins = pending_coins + 500, starter_owned = TRUE
+                        WHERE id = ?
+                        """,
+                        (stored["user_id"],),
+                    )
+                vip_level = {"vip": 1, "vip_1": 1, "vip_2": 2, "vip_3": 3}.get(stored["product"], 0)
+                if vip_level:
+                    connection.execute(
+                        "UPDATE players SET vip_status = TRUE, vip_level = GREATEST(vip_level, ?) WHERE id = ?",
+                        (vip_level, stored["user_id"]),
                     )
         elif stored["status"] != "succeeded":
             connection.execute(

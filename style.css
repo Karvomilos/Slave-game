@@ -910,3 +910,107 @@
     .rat-crumb { animation: crumb-hop 0.8s ease-in-out infinite alternate !important; }
     .particle, .hearts, .mg-float, .mgt-shine { display: none !important; }
   }
+
+
+/* ---------- социальный Хаб ---------- */
+.stage[hidden], .hub-screen[hidden], .hub-profile-summary[hidden], .hub-registration[hidden] { display: none; }
+.hub-screen {
+  position: relative; z-index: 3; display: flex; flex-direction: column;
+  width: 100%; min-height: 100vh; min-height: 100dvh; overflow-x: hidden;
+  padding: clamp(16px, 3vw, 34px);
+  background:
+    linear-gradient(180deg, rgba(2,3,7,.18), rgba(2,3,7,.88)),
+    radial-gradient(ellipse at 50% 42%, rgba(129,8,27,.2), transparent 54%),
+    repeating-linear-gradient(90deg, transparent 0 119px, rgba(255,255,255,.012) 120px);
+}
+.hub-screen::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%, rgba(255,30,65,.025) 50%, transparent 65%);
+}
+.hub-topbar { position: relative; z-index: 15; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.hub-logo { display: flex; align-items: center; gap: 12px; }
+.hub-logo-mark { color: #f3e9e9; font: 22px 'Russo One', sans-serif; letter-spacing: .12em; text-shadow: 0 0 22px rgba(255,35,65,.38); }
+.hub-logo small { color: rgba(236,236,238,.36); font-size: 8px; letter-spacing: .22em; }
+.hub-tools { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.hub-content { position: relative; width: min(100%, 940px); margin: auto; padding: 34px 0 26px; }
+.hub-heading { margin-bottom: 24px; text-align: center; }
+.hub-heading > span { color: rgba(255,66,91,.66); font-size: 8px; letter-spacing: .42em; }
+.hub-heading h1 { margin: 10px 0 8px; color: #eee9eb; font: clamp(22px, 3.6vw, 38px) 'Russo One', sans-serif; letter-spacing: .08em; }
+.hub-heading p { color: rgba(236,236,238,.42); font-size: 11px; letter-spacing: .08em; }
+.hub-account {
+  display: grid; grid-template-columns: 94px 1fr; align-items: center; gap: 18px;
+  width: min(100%, 590px); min-height: 112px; margin: 0 auto 26px; padding: 12px 18px;
+  border: 1px solid rgba(255,255,255,.09); background: rgba(12,12,18,.72);
+}
+.hub-avatar { display: grid; place-items: center; width: 88px; height: 88px; overflow: hidden; border: 1px solid rgba(255,54,78,.36); background: #090a0f; box-shadow: 0 0 24px rgba(255,30,60,.08); }
+.hub-avatar img, .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+.hub-avatar .avatar-pet { position: static; width: 86px; height: 86px; pointer-events: none; animation: none; }
+.hub-avatar .avatar-pet svg { width: 100%; height: 100%; }
+.hub-registration { display: grid; grid-template-columns: 1fr 1fr; align-items: center; column-gap: 16px; }
+.hub-registration .nickname-field { margin: 0; }
+.hub-registration .age-check { margin: 0; }
+.hub-registration .profile-note { grid-column: 1 / -1; margin-bottom: 0; color: var(--muted); }
+.hub-profile-summary { display: grid; gap: 5px; }
+.hub-profile-summary span { color: var(--red); font-size: 8px; letter-spacing: .24em; }
+.hub-profile-summary strong { overflow-wrap: anywhere; font: 19px 'Russo One', sans-serif; letter-spacing: .06em; }
+.hub-profile-summary small { color: var(--muted); font-size: 9px; line-height: 1.5; }
+.hub-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.hub-card {
+  position: relative; isolation: isolate; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 310px; padding: 28px; overflow: hidden; cursor: pointer;
+  border: 1px solid rgba(255,255,255,.12); color: var(--ink);
+  background: linear-gradient(145deg, rgba(22,20,28,.94), rgba(6,7,11,.98));
+  box-shadow: 0 22px 50px rgba(0,0,0,.38);
+  transition: transform .35s var(--ease-out), border-color .3s, box-shadow .35s;
+}
+.hub-card::before { content: ''; position: absolute; inset: 0; z-index: -1; background: radial-gradient(circle at 50% 44%, rgba(255,30,60,.14), transparent 48%); }
+.hub-card:hover, .hub-card:focus-visible { transform: translateY(-5px); border-color: rgba(255,64,88,.55); box-shadow: 0 24px 65px rgba(0,0,0,.55), 0 0 34px rgba(255,30,60,.09); outline: none; }
+.hub-card-number { position: absolute; top: 18px; left: 20px; color: rgba(236,236,238,.32); font-size: 8px; letter-spacing: .18em; }
+.hub-card strong { margin-top: 24px; color: #f4edef; font: clamp(18px, 2.5vw, 27px) 'Russo One', sans-serif; letter-spacing: .07em; text-align: center; }
+.hub-card small { margin-top: 9px; color: rgba(236,236,238,.46); font-size: 11px; letter-spacing: .08em; }
+.hub-card-action { margin-top: 28px; padding: 9px 18px; border: 1px solid rgba(255,57,82,.32); color: #e86779; font: 9px 'Russo One', sans-serif; letter-spacing: .18em; }
+.bottle-emblem { position: relative; width: 54px; height: 105px; border: 2px solid #802c3c; border-top-width: 5px; background: linear-gradient(100deg, rgba(255,255,255,.03), rgba(126,15,38,.26)); box-shadow: inset 8px 0 18px rgba(255,255,255,.025), 0 0 28px rgba(255,25,60,.1); transform: rotate(13deg); }
+.bottle-emblem::before { content: ''; position: absolute; left: 14px; top: -27px; width: 22px; height: 25px; border: 2px solid #802c3c; background: #111019; }
+.bottle-emblem::after { content: 'B'; position: absolute; left: 8px; right: 8px; top: 32px; padding: 8px 0; border-top: 1px solid #802c3c; border-bottom: 1px solid #802c3c; color: #ba5265; font: 25px 'Russo One', sans-serif; text-align: center; }
+.chain-emblem { display: flex; align-items: center; height: 100px; transform: rotate(-18deg); }
+.chain-emblem i { display: block; width: 35px; height: 58px; margin: -5px; border: 5px solid #63303a; box-shadow: inset 0 0 0 1px rgba(255,116,133,.08), 0 0 15px rgba(255,30,60,.07); }
+.chain-emblem i:nth-child(2) { transform: rotate(90deg); }
+.hub-room-note { min-height: 22px; margin-top: 18px; color: #c06371; text-align: center; font-size: 11px; letter-spacing: .12em; }
+.hub-footer { position: relative; padding-top: 14px; color: rgba(236,236,238,.2); text-align: center; font-size: 8px; }
+.avatar-preview { display: grid; place-items: center; width: 140px; height: 140px; margin: 0 auto 18px; overflow: hidden; border: 1px solid rgba(255,46,46,.35); background: #08090d; }
+.avatar-preview .avatar-pet { position: static; width: 135px; height: 135px; animation: none; pointer-events: none; }
+.avatar-preview .avatar-pet svg { width: 100%; height: 100%; }
+.profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+@media (max-width: 700px) {
+  .hub-screen { min-height: 100dvh; padding: calc(10px + env(safe-area-inset-top, 0px)) 10px calc(20px + env(safe-area-inset-bottom, 0px)); }
+  .hub-topbar { align-items: flex-start; gap: 10px; }
+  .hub-logo { display: grid; gap: 4px; }
+  .hub-logo-mark { font-size: 16px; }
+  .hub-logo small { font-size: 6px; }
+  .hub-tools { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 5px; flex: 1; }
+  .hub-tools .chip { min-width: 0; padding: 5px 3px; font-size: 8px; }
+  .hub-tools .vip, .hub-tools .panel-btn { min-width: 0; padding: 5px 2px; font-size: 7px; }
+  .hub-tools .vip span { font-size: 10px; }
+  .hub-tools .vip small, .hub-tools .more-hint { font-size: 6px; }
+  .hub-tools .more-menu { position: fixed; top: 88px; left: 10px; right: 10px; width: auto; }
+  .hub-content { padding: 24px 0 18px; }
+  .hub-heading { margin-bottom: 18px; }
+  .hub-heading h1 { font-size: 22px; line-height: 1.35; }
+  .hub-heading p { font-size: 9px; }
+  .hub-account { grid-template-columns: 72px 1fr; gap: 12px; padding: 10px; }
+  .hub-avatar { width: 68px; height: 68px; }
+  .hub-avatar .avatar-pet { width: 66px; height: 66px; }
+  .hub-registration { grid-template-columns: 1fr; gap: 10px; }
+  .hub-registration .profile-note { grid-column: auto; }
+  .hub-cards { grid-template-columns: 1fr; gap: 12px; }
+  .hub-card { min-height: 225px; padding: 22px; }
+  .hub-card strong { margin-top: 14px; font-size: 20px; }
+  .hub-card-action { margin-top: 17px; }
+  .bottle-emblem { width: 38px; height: 70px; }
+  .bottle-emblem::before { left: 9px; top: -20px; width: 16px; height: 18px; }
+  .bottle-emblem::after { top: 19px; padding: 4px 0; font-size: 18px; }
+  .chain-emblem { height: 68px; transform: rotate(-18deg) scale(.75); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hub-card { transition: none; }
+}

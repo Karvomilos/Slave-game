@@ -14,6 +14,10 @@ PRODUCTS = {
     "gems_10": {"amount": 99, "crystals": 100, "description": "100 клятв"},
     "gems_60": {"amount": 449, "crystals": 500, "description": "500 клятв"},
     "gems_150": {"amount": 899, "crystals": 1000, "description": "1000 клятв"},
+    "starter": {"amount": 149, "crystals": 0, "description": "Стартовый пак: 500 монет и уникальный ошейник"},
+    "vip_1": {"amount": 499, "crystals": 0, "description": "VIP 1 Палач"},
+    "vip_2": {"amount": 1499, "crystals": 0, "description": "VIP 2 Инквизитор"},
+    "vip_3": {"amount": 2999, "crystals": 0, "description": "VIP 3 Легенда"},
     "vip": {"amount": 500, "crystals": 0, "description": "VIP-доступ на 30 дней"},
 }
 RUBLE_AMOUNTS = {99, 449, 899, 2499}

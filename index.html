@@ -11,7 +11,54 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="stage">
+<section class="hub-screen" id="hub-screen" aria-label="Главное меню">
+  <header class="hub-topbar">
+    <div class="hub-logo"><span class="hub-logo-mark">B·FD</span><small>SOCIAL CLUB · 18+</small></div>
+    <div class="hub-tools">
+      <div class="chip gem"><i>◆</i><b id="hub-v-gems">0</b><span>клятв</span><button class="plus" id="hub-btn-gems" title="Купить клятвы">+</button></div>
+      <button class="vip" id="hub-btn-vip"><span>★ VIP</span><small>МАГАЗИН · ДО ×5</small></button>
+      <div class="more-wrap">
+        <button class="panel-btn" id="hub-btn-more" type="button" aria-expanded="false" aria-controls="hub-more-menu">Прочее ▾<small class="more-hint">аватар, профиль, звук</small></button>
+        <div class="more-menu" id="hub-more-menu" hidden>
+          <button class="panel-btn" id="hub-btn-avatar">Аватарка</button>
+          <button class="panel-btn" id="hub-btn-profile">Профиль</button>
+          <button class="panel-btn" id="hub-btn-referral">Друзья</button>
+          <button class="panel-btn" id="hub-btn-leaderboard">Рейтинг</button>
+          <button class="sound" id="hub-btn-sound">Звук: вкл</button>
+          <label class="volume-control" for="hub-volume-range"><span>Громкость <output id="hub-volume-value">60%</output></span><input id="hub-volume-range" type="range" min="0" max="100" step="1" value="60"></label>
+          <label class="censor-control" for="hub-censor-toggle"><span><b>Цензура</b><small>детский режим · мягкие термины</small></span><input id="hub-censor-toggle" type="checkbox" role="switch"><i aria-hidden="true"></i></label>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="hub-content">
+    <div class="hub-heading"><span>ЗА ДВЕРЬЮ ТЕБЯ ЖДУТ</span><h1>ВЫБЕРИ СВОЮ КОМНАТУ</h1><p>Тихий неон. Чужие взгляды. Твои правила.</p></div>
+    <section class="hub-account" id="hub-account">
+      <div class="hub-avatar" id="hub-avatar" aria-label="Аватар игрока"></div>
+      <div class="hub-registration" id="hub-registration">
+        <label class="nickname-field" for="start-nickname"><span>Как вас называть в игре?</span><input id="start-nickname" type="text" value="Игрок" maxlength="24" autocomplete="off"></label>
+        <label class="age-check"><input type="checkbox" id="age18"><i></i><span data-safe="Мне есть 18 лет. Я принимаю правила виртуальной игры.">Мне есть 18 лет. Я понимаю: игра мрачная, сцен насилия и унижения не скрывает.</span></label>
+        <p class="profile-note" id="start-nickname-note">Выберите комнату после подтверждения возраста.</p>
+      </div>
+      <div class="hub-profile-summary" id="hub-profile-summary" hidden><span>ИГРОК</span><strong id="hub-display-name">Игрок</strong><small>Возраст подтверждён · профиль сохранён</small></div>
+    </section>
+    <div class="hub-cards">
+      <button class="hub-card bottle-card" id="hub-bottle" type="button">
+        <span class="hub-card-number">01 · СОЦИАЛЬНАЯ КОМНАТА</span>
+        <span class="bottle-emblem" aria-hidden="true"><i></i></span>
+        <strong>БУТЫЛОЧКА</strong><small>Целуй свою Госпожу</small><span class="hub-card-action">ВОЙТИ →</span>
+      </button>
+      <button class="hub-card slave-card" id="hub-slave" type="button">
+        <span class="hub-card-number">02 · ПРИВАТНАЯ КОМНАТА</span>
+        <span class="chain-emblem" aria-hidden="true"><i></i><i></i><i></i></span>
+        <strong>КОМНАТА НИЖНЕГО</strong><small>Тамагочи и Дисциплина</small><span class="hub-card-action">ВОЙТИ →</span>
+      </button>
+    </div>
+    <p class="hub-room-note" id="hub-room-note" aria-live="polite"></p>
+  </div>
+  <footer class="hub-footer">BOTTLE GAME · ТЕМНОТА ОБЪЕДИНЯЕТ</footer>
+</section>
+<div class="stage" id="game-screen" hidden>
 
   <header>
     <div class="brand"><span id="brand-name" data-safe="СЛУГА">ПОДОПЫТНЫЙ</span> <span id="slave-no">001</span></div>
@@ -26,6 +73,7 @@
       <div class="more-wrap">
         <button class="panel-btn" id="btn-more" type="button" aria-expanded="false" aria-controls="more-menu">Прочее ▾<small class="more-hint">профиль, звук, общество, выход</small></button>
         <div class="more-menu" id="more-menu" hidden>
+          <button class="panel-btn" id="btn-avatar">Аватарка</button>
           <button class="panel-btn" id="btn-profile">Профиль</button>
           <button class="panel-btn" id="btn-referral">Друзья</button>
           <button class="panel-btn" id="btn-leaderboard">Рейтинг</button>
@@ -864,10 +912,10 @@
   <footer data-safe="Еда восстанавливает силы · дисциплина помогает обучению · нажмите на параметр для справки">Кормёжка слабо лечит · оковы сдерживают · пояс страхует · тык в параметр — справка</footer>
 </div>
 
-<!-- выбор лица при входе -->
-<div class="overlay open" id="start-modal">
+<!-- выбор типа персонажа в Комнате нижнего -->
+<div class="overlay" id="start-modal">
   <div class="modal" role="dialog" aria-modal="true">
-    <h2>ПРОТОКОЛ ДОПУСКА</h2>
+    <h2>ВЫБЕРИТЕ ТИП ПОДОПЫТНОГО</h2>
     <p class="sub" data-safe="Выберите внешность слуги. Она задаст его характер и стиль обучения.">Зафиксируйте внешность подопытного. Внешность — это характер: она навсегда задаст стиль содержания.</p>
     <div class="face-picks">
       <button class="face-pick sel" data-face="calm">
@@ -886,17 +934,19 @@
         <small>Дань +10% · агрессия +15%</small>
       </button>
     </div>
-    <label class="nickname-field" for="start-nickname">
-      <span>Как вас называть в игре? Этот ник увидят вместо имени Telegram.</span>
-      <input id="start-nickname" type="text" value="Игрок" maxlength="24" autocomplete="off">
-    </label>
-    <p class="profile-note" id="start-nickname-note"></p>
-    <label class="age-check">
-      <input type="checkbox" id="age18">
-      <i></i>
-      <span data-safe="Мне есть 18 лет. Я понимаю: это игра о дисциплине и обучении виртуального слуги.">Мне есть 18 лет. Я понимаю: игра мрачная, сцен насилия и унижения не скрывает.</span>
-    </label>
-    <button class="big-btn" id="btn-start" disabled>Начать наблюдение</button>
+    <button class="big-btn" id="btn-start">Выбрать этот тип</button>
+  </div>
+</div>
+
+<div class="overlay" id="avatar-modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="avatar-title">
+    <button class="close" data-close="avatar-modal" aria-label="Закрыть">×</button>
+    <h2 id="avatar-title">АВАТАРКА</h2>
+    <p class="sub">Используйте фото Telegram или транслируйте текущий внешний вид питомца.</p>
+    <div class="avatar-preview" id="avatar-preview"></div>
+    <button class="big-btn" id="avatar-use-telegram" type="button">Фото Telegram</button>
+    <button class="big-btn ghost" id="avatar-use-pet" type="button">Внешний вид питомца</button>
+    <p class="profile-note" id="avatar-note"></p>
   </div>
 </div>
 
