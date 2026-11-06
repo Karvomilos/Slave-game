@@ -4195,8 +4195,8 @@
     const input = $('bottle-radio-file');
     const file = input.files && input.files[0];
     if (!file) { bottleStatus('Сначала выберите MP3-файл.', true); return; }
-    if (!file.name.toLowerCase().endsWith('.mp3') || !file.size || file.size > 5 * 1024 * 1024) {
-      bottleStatus('Нужен MP3-файл размером от 1 байта до 5 МБ.', true);
+    if (!file.name.toLowerCase().endsWith('.mp3') || !file.size || file.size > 20 * 1024 * 1024) {
+      bottleStatus('Нужен MP3-файл размером от 1 байта до 20 МБ.', true);
       sfx.deny();
       return;
     }
