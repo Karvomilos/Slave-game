@@ -46,7 +46,7 @@
       <button class="hub-card bottle-card" id="hub-bottle" type="button">
         <span class="hub-card-number">01 · СОЦИАЛЬНАЯ КОМНАТА</span>
         <span class="bottle-emblem" aria-hidden="true"><i></i></span>
-        <strong>БУТЫЛОЧКА</strong><small>Целуй свою Госпожу</small><span class="hub-card-action">ВОЙТИ →</span>
+        <strong>БУТЫЛОЧКА</strong><small>Знакомься и целуй свою Госпожу</small><span class="hub-card-action">ВОЙТИ →</span>
       </button>
       <button class="hub-card slave-card" id="hub-slave" type="button">
         <span class="hub-card-number">02 · ПРИВАТНАЯ КОМНАТА</span>
@@ -58,6 +58,61 @@
   </div>
   <footer class="hub-footer">BOTTLE GAME · ТЕМНОТА ОБЪЕДИНЯЕТ</footer>
 </section>
+
+<section class="bottle-screen" id="bottle-screen" aria-label="Игра Бутылочка" hidden>
+  <header class="bottle-header">
+    <button class="panel-btn bottle-back" id="bottle-back" type="button">← В Хаб</button>
+    <div class="bottle-title"><span>SOCIAL ROOM · 18+</span><h1>БУТЫЛОЧКА</h1><small id="bottle-room-label">КОМНАТА MAIN · 0/10</small></div>
+    <div class="chip gem"><i>◆</i><b id="bottle-v-gems">0</b><span>клятв</span><button class="plus" id="bottle-btn-gems" title="Купить клятвы">+</button></div>
+  </header>
+  <p class="bottle-connection" id="bottle-connection" role="status">Подключение к комнате…</p>
+
+  <div class="bottle-layout">
+    <section class="bottle-game-panel" aria-label="Круг игроков">
+      <div class="bottle-table" id="bottle-table">
+        <div class="bottle-table-ring" aria-hidden="true"></div>
+        <div class="bottle-players" id="bottle-players"></div>
+        <div class="bottle-center">
+          <div class="bottle-spin" id="bottle-spin" aria-hidden="true">
+            <svg viewBox="0 0 80 170" xmlns="http://www.w3.org/2000/svg">
+              <defs><linearGradient id="room-bottle-glass" x1="0" x2="1"><stop stop-color="#270b17"/><stop offset=".45" stop-color="#a32849" stop-opacity=".72"/><stop offset=".7" stop-color="#3b1023"/><stop offset="1" stop-color="#130911"/></linearGradient></defs>
+              <path d="M31 5h18v35c0 9 5 15 10 22 5 8 7 16 7 27v61c0 9-6 14-14 14H28c-8 0-14-5-14-14V89c0-11 2-19 7-27 5-7 10-13 10-22Z" fill="url(#room-bottle-glass)" stroke="#d65a78" stroke-width="2"/>
+              <path d="M29 3h22v12H29z" fill="#b28a68" stroke="#ead0ae"/>
+              <path d="M20 91h40v43H20z" fill="#e7d9d0" fill-opacity=".85" stroke="#6e263b"/>
+              <text x="40" y="119" text-anchor="middle" fill="#64162e" font-size="25" font-family="Russo One, sans-serif">B</text>
+              <path d="M25 48c-5 20-5 31-5 50" fill="none" stroke="#fff" stroke-opacity=".32" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <strong id="bottle-turn-text">ОЖИДАНИЕ ИГРОКОВ</strong>
+          <button class="bottle-spin-button" id="bottle-spin-button" type="button" disabled>КРУТИТЬ</button>
+        </div>
+      </div>
+      <div class="bottle-choice" id="bottle-choice" role="dialog" aria-modal="true" aria-labelledby="bottle-choice-title" hidden>
+        <span>ВАШ ВЫБОР</span><h2 id="bottle-choice-title">Что вы ответите?</h2><p id="bottle-choice-note">Выбор соперника скрыт до завершения раунда.</p>
+        <div><button class="choice-kiss" id="bottle-choice-kiss" type="button">💋 Поцеловать</button><button class="choice-humiliate" id="bottle-choice-humiliate" type="button" data-safe="💩 Подколоть">💩 Унизить</button></div>
+      </div>
+    </section>
+
+    <aside class="bottle-gifts" aria-label="Подарки и эффекты">
+      <div class="bottle-section-heading"><span>ПОДАРКИ</span><h2>ЭФФЕКТ НА АВАТАР</h2><p>Новый подарок полностью заменяет прежний эффект.</p></div>
+      <label class="bottle-target-label" for="bottle-effect-target">Кому подарить<select id="bottle-effect-target"></select></label>
+      <div class="bottle-gift-grid">
+        <button class="bottle-gift poop" type="button" data-effect="poop"><span class="gift-icon">💩</span><strong>Какашка</strong><small>◆ 10 клятв</small></button>
+        <button class="bottle-gift kiss" type="button" data-effect="kiss"><span class="gift-icon">💋</span><strong>Поцелуй</strong><small>◆ 20 клятв</small></button>
+        <button class="bottle-gift crown" type="button" data-effect="crown"><span class="gift-icon">👑</span><strong>Корона</strong><small>◆ 100 клятв</small></button>
+        <button class="bottle-gift fire" type="button" data-effect="fire"><span class="gift-icon">🔥</span><strong>Огонь</strong><small>◆ 250 клятв</small></button>
+      </div>
+      <p class="bottle-gift-note" id="bottle-gift-note" aria-live="polite">Выберите получателя и подарок.</p>
+    </aside>
+  </div>
+
+  <section class="bottle-chat" aria-label="Чат комнаты">
+    <div class="bottle-chat-heading"><h2>ЧАТ КОМНАТЫ</h2><span>события и сообщения игроков</span></div>
+    <div class="bottle-chat-messages" id="bottle-chat-messages" aria-live="polite"></div>
+    <form class="bottle-chat-form" id="bottle-chat-form"><input id="bottle-chat-input" type="text" maxlength="300" autocomplete="off" placeholder="Написать в комнату…" aria-label="Сообщение"><button type="submit">ОТПРАВИТЬ</button></form>
+  </section>
+</section>
+
 <div class="stage" id="game-screen" hidden>
 
   <header>

@@ -14,12 +14,13 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.exceptions import TelegramRetryAfter
 from aiogram.filters import CommandStart
 from aiogram.types import BotCommand, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 from telegram_init_data import TelegramInitDataError, parse, validate
 
+from bottle_rooms import BottleRoomManager
 from db import database, init_database
 from payments import PaymentError, create_payment, create_ruble_payment, get_verified_payment, payment_credentials_configured
 
@@ -101,6 +102,9 @@ def player_dict(row: Any) -> dict[str, Any]:
         "vip_status": bool(row["vip_status"]),
         "vip_level": row["vip_level"],
         "starter_owned": bool(row["starter_owned"]),
+        "current_effect": row["current_effect"],
+        "bottle_rating": row["bottle_rating"],
+        "bottle_revision": row["bottle_revision"],
         "oldest_slave_age_days": row["oldest_slave_age_days"],
         "oldest_slave_age_hours": row["oldest_slave_age_hours"],
         "oldest_slave_no": row["oldest_slave_no"],
@@ -257,6 +261,7 @@ class PlayerStats(BaseModel):
 
 class SaveRequest(LoadRequest):
     stats: PlayerStats
+    bottle_revision: int = Field(default=0, ge=0)
 
 
 class NicknameRequest(LoadRequest):
@@ -545,6 +550,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+bottle_manager = BottleRoomManager(
+    authenticate,
+    allow_demo=os.getenv("BOTTLE_ALLOW_DEMO", "0").lower() in {"1", "true", "yes"},
+)
+
+
+@app.websocket("/ws/room/{room_id}")
+async def bottle_room(websocket: WebSocket, room_id: str) -> None:
+    await bottle_manager.endpoint(websocket, room_id)
+
 
 @app.post("/api/load_data")
 def load_data(request: LoadRequest) -> dict[str, Any]:
@@ -633,6 +648,11 @@ def save_data(request: SaveRequest) -> dict[str, Any]:
             if isinstance(incoming_slave_no, int) and incoming_slave_no >= 1
             else stats.oldest_slave_no
         )
+        saved_crystals = (
+            stats.crystals + row["pending_crystals"]
+            if request.bottle_revision == row["bottle_revision"]
+            else row["crystals"]
+        )
         connection.execute(
             """
             UPDATE players
@@ -642,7 +662,7 @@ def save_data(request: SaveRequest) -> dict[str, Any]:
             WHERE id = ?
             """,
             (
-                username_for(user), stats.coins + row["pending_coins"], stats.crystals + row["pending_crystals"],
+                username_for(user), stats.coins + row["pending_coins"], saved_crystals,
                 stats.slaves_killed, json.dumps(saved_stats, ensure_ascii=False), row["vip_status"],
                 oldest_days, oldest_no, oldest_age_hours, user["id"],
             ),

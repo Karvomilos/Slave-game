@@ -484,7 +484,7 @@
   const $ = id => document.getElementById(id);
 
   function blockBeforeOnboarding(event) {
-    if (onboardingComplete || currentScreen === 'hub' || event.target.closest('#start-modal, .overlay.open')) return;
+    if (onboardingComplete || currentScreen !== 'slave' || event.target.closest('#start-modal, .overlay.open')) return;
     event.preventDefault();
     event.stopImmediatePropagation();
   }
@@ -616,7 +616,7 @@
       ambientGain = g;
     }
     if (!musicBus) {
-      musicBus = c.createGain(); musicBus.gain.value = 0.55;
+      musicBus = c.createGain(); musicBus.gain.value = currentScreen === 'hub' ? 0.95 : 0.55;
       drumBus = c.createGain(); drumBus.gain.value = 0.85;
       // пространство: дилэй с обратной связью
       delayNode = c.createDelay(1.2); delayNode.delayTime.value = 0.36;
@@ -756,10 +756,10 @@
       o.type = index === 0 ? 'sine' : 'triangle';
       o.frequency.value = root * ratio;
       o.detune.value = index * 3 - 3;
-      f.type = 'lowpass'; f.frequency.value = 480;
+      f.type = 'lowpass'; f.frequency.value = 850;
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.linearRampToValueAtTime(0.028, t + 3.2);
-      g.gain.setValueAtTime(0.028, t + dur - 3.8);
+      g.gain.linearRampToValueAtTime(0.06, t + 2.2);
+      g.gain.setValueAtTime(0.06, t + dur - 3.8);
       g.gain.linearRampToValueAtTime(0.0001, t + dur);
       o.connect(f).connect(g).connect(musicBus);
       o.start(t); o.stop(t + dur + 0.1);
@@ -769,8 +769,9 @@
     const roots = [55, 49, 43.65, 41.2];
     const root = roots[Math.floor(step / 32) % roots.length];
     if (step % 32 === 0) {
-      pluck(root, t, 9.5, 0.16, 'sine');
-      hubPad(root * 2, t);
+      pluck(root * 2, t, 9.5, 0.2, 'sine');
+      pluck(root * 4, t + 0.08, 6.5, 0.055, 'triangle');
+      hubPad(root * 4, t);
     }
     if (step % 64 === 32) noiseAt(t, 2.8, 310, 0.014, 'lowpass', musicBus);
     if (step % 128 === 88) {
@@ -947,11 +948,17 @@
   function showScreen(screen) {
     currentScreen = screen;
     $('hub-screen').hidden = screen !== 'hub';
+    $('bottle-screen').hidden = screen !== 'bottle';
     $('game-screen').hidden = screen !== 'slave';
+    if (screen !== 'bottle') disconnectBottle();
     setMoreMenu(false);
     setHubMoreMenu(false);
     if (screen === 'hub') document.querySelectorAll('.overlay.open').forEach(overlay => overlay.classList.remove('open'));
-    if (AC) { gridStart = AC.currentTime + 0.12; stepCount = 0; }
+    if (AC) {
+      gridStart = AC.currentTime + 0.12;
+      stepCount = 0;
+      if (musicBus) musicBus.gain.setTargetAtTime(screen === 'hub' ? 0.95 : 0.55, AC.currentTime, 0.15);
+    }
     renderAvatars();
     window.scrollTo(0, 0);
   }
@@ -982,9 +989,7 @@
     }
   }
   $('age18').addEventListener('change', () => { $('start-nickname-note').textContent = ''; });
-  $('hub-bottle').addEventListener('click', async () => {
-    if (await confirmHubRegistration()) $('hub-room-note').textContent = 'Набор в комнаты...';
-  });
+  $('hub-bottle').addEventListener('click', enterBottle);
   $('hub-slave').addEventListener('click', async () => {
     if (!await confirmHubRegistration()) return;
     $('hub-room-note').textContent = '';
@@ -1030,6 +1035,7 @@
     $('v-coins').textContent = state.coins;
     $('v-gems').textContent = state.gems;
     $('hub-v-gems').textContent = state.gems;
+    $('bottle-v-gems').textContent = state.gems;
     updateHubAccount();
     $('rat-family').setAttribute('opacity', artifacts.ratking ? 1 : 0);
 
@@ -2922,6 +2928,11 @@
     nicknameChanges = Math.max(0, Math.floor(player.nickname_changes || 0));
     state.coins = player.coins;
     state.gems = player.crystals;
+    const playerBottleRevision = Math.max(0, Math.floor(player.bottle_revision || 0));
+    if (playerBottleRevision >= bottleBalanceRevision) {
+      bottleBalanceRevision = playerBottleRevision;
+      bottleBalance = Math.max(0, Math.floor(player.crystals || 0));
+    }
     vipStatus = !!player.vip_status;
     vipLevel = Math.max(0, Math.min(3, Math.floor(player.vip_level || 0)));
     starterOwned = !!player.starter_owned;
@@ -3451,7 +3462,9 @@
   const referralId = /^\d+$/.test(referralParam) ? Number(referralParam) : null;
   const telegramUserId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : 'demo';
   const LOCAL_PROGRESS_KEY = 'p001_progress_' + telegramUserId;
-  const API_BASE = (document.querySelector('meta[name="p001-api-url"]')?.content || '').replace(/\/+$/, '');
+  const localPreview = ['127.0.0.1', 'localhost'].includes(window.location.hostname);
+  const configuredApiBase = document.querySelector('meta[name="p001-api-url"]')?.content || '';
+  const API_BASE = (localPreview ? '' : configuredApiBase).replace(/\/+$/, '');
   let persistenceReady = false;
   let saveAfterLoad = false;
   let saveTimer = null;
@@ -3472,6 +3485,8 @@
   let vipStatus = false;
   let vipLevel = 0;
   let starterOwned = false;
+  let bottleBalanceRevision = 0;
+  let bottleBalance = null;
 
   function isObject(value) { return value && typeof value === 'object' && !Array.isArray(value); }
   function currentSlaveAgeDays() {
@@ -3503,6 +3518,7 @@
     updateOldestSlaveAge();
     return JSON.stringify({
       initData,
+      bottle_revision: bottleBalanceRevision,
       stats: {
         coins: Math.max(0, Math.floor(state.coins)),
         crystals: Math.max(0, Math.floor(state.gems)),
@@ -3536,12 +3552,18 @@
     try {
       const requestedCoins = Math.floor(state.coins);
       const requestedGems = Math.floor(state.gems);
+      const requestedBottleRevision = bottleBalanceRevision;
       const player = await postProgress('/api/save_data');
       const coinDelta = Math.floor(state.coins) - requestedCoins;
       const gemDelta = Math.floor(state.gems) - requestedGems;
       applyPlayerIdentity(player);
       state.coins += coinDelta;
-      state.gems += gemDelta;
+      if (bottleBalanceRevision > requestedBottleRevision && bottleBalance !== null) {
+        state.gems = bottleBalance;
+        saveAgain = true;
+      } else {
+        state.gems += gemDelta;
+      }
       slavesKilled = Math.max(slavesKilled, player.slaves_killed || 0);
       oldestSlaveAgeDays = Math.max(0, Math.floor(player.oldest_slave_age_days || 0));
       oldestSlaveAgeHours = Math.max(0, Math.floor(player.oldest_slave_age_hours || 0));
@@ -3697,6 +3719,387 @@
     }).catch(() => {});
   });
   setInterval(() => scheduleSave(), 30000);
+
+  /* ================= БУТЫЛОЧКА: WEBSOCKET-КОМНАТА ================= */
+  const BOTTLE_EFFECTS = {
+    poop: { name: 'Какашка', emoji: '💩', cost: 10 },
+    kiss: { name: 'Поцелуй', emoji: '💋', cost: 20 },
+    crown: { name: 'Корона', emoji: '👑', cost: 100 },
+    fire: { name: 'Огонь', emoji: '🔥', cost: 250 }
+  };
+  const bottleRoomParam = new URLSearchParams(window.location.search).get('room') || 'main';
+  const bottleRoomId = /^[A-Za-z0-9_-]{1,32}$/.test(bottleRoomParam) ? bottleRoomParam : 'main';
+  let bottleSocket = null;
+  let bottleRoom = null;
+  let bottlePlayerId = Number.isInteger(telegramUserId) ? telegramUserId : null;
+  let bottleSelectedTarget = null;
+  let bottleShouldReconnect = false;
+  let bottleReconnectTimer = null;
+  let bottleSpinTimer = null;
+  let bottleSpinning = false;
+  let bottleSpinRotation = 0;
+
+  function bottleDemoId() {
+    let id = null;
+    try { id = Number(sessionStorage.getItem('p001_bottle_demo_id')); } catch (e) {}
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      id = 800_000_000_000 + Math.floor(Math.random() * 1_000_000_000);
+      try { sessionStorage.setItem('p001_bottle_demo_id', String(id)); } catch (e) {}
+    }
+    return id;
+  }
+  function bottleStatus(text, error = false) {
+    $('bottle-connection').textContent = text;
+    $('bottle-connection').classList.toggle('error', error);
+  }
+  function bottleSend(payload) {
+    if (!bottleSocket || bottleSocket.readyState !== WebSocket.OPEN) {
+      bottleStatus('Нет соединения с комнатой. Повторите через мгновение.', true);
+      return false;
+    }
+    bottleSocket.send(JSON.stringify(payload));
+    return true;
+  }
+  function disconnectBottle() {
+    bottleShouldReconnect = false;
+    clearTimeout(bottleReconnectTimer);
+    clearTimeout(bottleSpinTimer);
+    bottleReconnectTimer = null;
+    bottleSpinning = false;
+    if (bottleSocket) {
+      const socket = bottleSocket;
+      bottleSocket = null;
+      socket.onclose = null;
+      socket.close();
+    }
+    bottleRoom = null;
+    bottleSelectedTarget = null;
+  }
+  async function enterBottle() {
+    if (!await confirmHubRegistration()) return;
+    $('hub-room-note').textContent = '';
+    showScreen('bottle');
+    renderBottleRoom();
+    connectBottle();
+  }
+  function connectBottle() {
+    if (bottleSocket && [WebSocket.OPEN, WebSocket.CONNECTING].includes(bottleSocket.readyState)) return;
+    clearTimeout(bottleReconnectTimer);
+    bottleShouldReconnect = true;
+    bottleStatus('Подключение к комнате…');
+    const httpBase = API_BASE || window.location.origin;
+    const wsBase = httpBase.replace(/^http:/i, 'ws:').replace(/^https:/i, 'wss:');
+    const socket = new WebSocket(`${wsBase}/ws/room/${encodeURIComponent(bottleRoomId)}`);
+    bottleSocket = socket;
+    socket.addEventListener('open', () => {
+      const auth = initData
+        ? { initData }
+        : { demo_id: bottleDemoId(), username: displayName };
+      socket.send(JSON.stringify({ type: 'join', ...auth }));
+      bottleStatus('Соединение установлено. Ожидаем игроков…');
+    });
+    socket.addEventListener('message', event => {
+      if (socket !== bottleSocket) return;
+      try { handleBottleEvent(JSON.parse(event.data)); }
+      catch (error) { console.warn('Некорректное событие комнаты:', error); }
+    });
+    socket.addEventListener('error', () => {
+      if (socket === bottleSocket) bottleStatus('Не удалось подключиться к комнате.', true);
+    });
+    socket.addEventListener('close', event => {
+      if (socket !== bottleSocket) return;
+      bottleSocket = null;
+      renderBottleRoom();
+      if (event.code === 4000) {
+        bottleShouldReconnect = false;
+        bottleStatus('Комната открыта в другой вкладке.', true);
+        return;
+      }
+      if (event.code === 1008) {
+        bottleShouldReconnect = false;
+        bottleStatus(tg ? 'Вход не выполнен. Перезапустите игру кнопкой Telegram.' : 'Для локального теста задайте BOTTLE_ALLOW_DEMO=1.', true);
+        return;
+      }
+      if (bottleShouldReconnect && currentScreen === 'bottle') {
+        bottleStatus('Соединение потеряно. Переподключение…', true);
+        bottleReconnectTimer = setTimeout(connectBottle, 2000);
+      }
+    });
+  }
+  function handleBottleEvent(event) {
+    if (event.type === 'welcome') {
+      bottlePlayerId = event.player_id;
+      applyBottleBalance(event.crystals, event.bottle_revision, false);
+      setBottleRoom(event.room);
+      bottleStatus('Вы в комнате. Нажмите на аватар, чтобы выбрать получателя подарка.');
+    } else if (event.type === 'room_state') {
+      setBottleRoom(event.room);
+    } else if (event.type === 'spin_result') {
+      setBottleRoom(event.room);
+      startBottleSpin(event.target_id, event.duration || 3200);
+    } else if (event.type === 'round_result') {
+      clearTimeout(bottleSpinTimer);
+      bottleSpinning = false;
+      setBottleRoom(event.room);
+      bottleStatus(event.both_kiss ? 'Взаимный поцелуй: оба игрока получили +5 рейтинга.' : 'Раунд завершён: цель получила −3 рейтинга.');
+    } else if (event.type === 'effect_changed') {
+      setBottleRoom(event.room, event.target_id);
+      if (event.sender_id === bottlePlayerId) {
+        const item = BOTTLE_EFFECTS[event.effect];
+        $('bottle-gift-note').textContent = `${item.emoji} ${item.name} отправлен. Списано ${item.cost} клятв.`;
+        sfx.gem();
+      }
+    } else if (event.type === 'balance_changed') {
+      applyBottleBalance(event.crystals, event.bottle_revision, true);
+    } else if (event.type === 'chat_message') {
+      appendBottleChat(event.message);
+    } else if (event.type === 'error') {
+      $('bottle-gift-note').textContent = event.message;
+      bottleStatus(event.message, true);
+      sfx.deny();
+    }
+  }
+  function applyBottleBalance(crystals, revision, save) {
+    const nextRevision = Math.max(0, Math.floor(revision || 0));
+    if (nextRevision < bottleBalanceRevision) return;
+    bottleBalanceRevision = nextRevision;
+    bottleBalance = Math.max(0, Math.floor(crystals || 0));
+    state.gems = bottleBalance;
+    render();
+    if (save) {
+      if (saveInFlight) saveAgain = true;
+      scheduleSave(true);
+    }
+  }
+  function setBottleRoom(room, animateTarget = null) {
+    bottleRoom = room;
+    renderBottleRoom(animateTarget);
+  }
+  function bottlePlayerName(id) {
+    const player = bottleRoom && bottleRoom.players.find(item => item.id === id);
+    return player ? player.username : 'Игрок';
+  }
+  function bottleFallback(player) {
+    const fallback = document.createElement('span');
+    fallback.className = 'bottle-avatar-fallback';
+    if (player.id === bottlePlayerId && avatarMode === 'pet') {
+      fallback.appendChild(petAvatarClone());
+    } else {
+      fallback.innerHTML = '<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#171822"/><circle cx="32" cy="23" r="11" fill="#765362"/><path d="M12 58c2-15 10-22 20-22s18 7 20 22" fill="#49323f"/><path d="M17 16 32 5l15 11" fill="none" stroke="#b14b67" stroke-width="2"/></svg>';
+    }
+    return fallback;
+  }
+  function renderBottlePlayers(animateTarget = null) {
+    const container = $('bottle-players');
+    container.replaceChildren();
+    if (!bottleRoom) return;
+    const count = bottleRoom.players.length;
+    bottleRoom.players.forEach((player, index) => {
+      const angle = -Math.PI / 2 + index * Math.PI * 2 / count;
+      const seat = document.createElement('div');
+      seat.className = 'bottle-seat';
+      seat.classList.toggle('current-turn', player.id === bottleRoom.current_turn);
+      seat.classList.toggle('current-target', player.id === bottleRoom.target_id);
+      seat.style.setProperty('--seat-x', `${50 + Math.cos(angle) * 43}%`);
+      seat.style.setProperty('--seat-y', `${50 + Math.sin(angle) * 39}%`);
+      seat.dataset.playerId = player.id;
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'bottle-avatar-button';
+      button.classList.toggle('selected', player.id === bottleSelectedTarget);
+      button.title = player.id === bottlePlayerId ? 'Ваш аватар' : `Выбрать ${player.username} получателем подарка`;
+      button.addEventListener('click', () => {
+        if (player.id === bottlePlayerId) {
+          $('bottle-gift-note').textContent = 'Подарок предназначен другому игроку.';
+          return;
+        }
+        bottleSelectedTarget = player.id;
+        $('bottle-effect-target').value = String(player.id);
+        renderBottleRoom();
+      });
+      if (player.avatar_url && /^https:\/\//.test(player.avatar_url)) {
+        const image = document.createElement('img');
+        image.className = 'bottle-avatar-image';
+        image.src = player.avatar_url;
+        image.alt = `Аватар ${player.username}`;
+        image.referrerPolicy = 'no-referrer';
+        image.addEventListener('error', () => image.replaceWith(bottleFallback(player)), { once: true });
+        button.appendChild(image);
+      } else {
+        button.appendChild(bottleFallback(player));
+      }
+      const effect = BOTTLE_EFFECTS[player.current_effect];
+      if (effect) {
+        const badge = document.createElement('span');
+        badge.className = 'bottle-effect-badge' + (player.id === animateTarget ? ' effect-drop' : '');
+        badge.textContent = effect.emoji;
+        badge.title = effect.name;
+        button.appendChild(badge);
+      }
+      if (player.id === bottleRoom.current_turn) {
+        const marker = document.createElement('span');
+        marker.className = 'bottle-turn-marker';
+        marker.textContent = 'ХОД';
+        button.appendChild(marker);
+      }
+      const name = document.createElement('span');
+      name.className = 'bottle-player-name';
+      name.textContent = player.username;
+      name.title = player.username;
+      const rating = document.createElement('span');
+      rating.className = 'bottle-player-meta';
+      rating.textContent = `Рейтинг: ${player.rating}`;
+      const effectLabel = document.createElement('span');
+      effectLabel.className = 'bottle-player-meta bottle-player-effect';
+      effectLabel.textContent = effect ? `${effect.emoji} ${effect.name}` : '';
+      seat.append(button, name, rating, effectLabel);
+      container.appendChild(seat);
+    });
+  }
+  function renderBottleTargets() {
+    const select = $('bottle-effect-target');
+    const targets = bottleRoom ? bottleRoom.players.filter(player => player.id !== bottlePlayerId) : [];
+    if (!targets.some(player => player.id === bottleSelectedTarget)) {
+      bottleSelectedTarget = targets.length ? targets[0].id : null;
+    }
+    select.replaceChildren();
+    if (!targets.length) {
+      const option = document.createElement('option');
+      option.textContent = 'Ожидание игроков…';
+      option.value = '';
+      select.appendChild(option);
+    } else {
+      for (const player of targets) {
+        const option = document.createElement('option');
+        option.value = player.id;
+        option.textContent = player.username;
+        option.selected = player.id === bottleSelectedTarget;
+        select.appendChild(option);
+      }
+    }
+    const connected = !!bottleSocket && bottleSocket.readyState === WebSocket.OPEN;
+    document.querySelectorAll('.bottle-gift').forEach(button => { button.disabled = !connected || !bottleSelectedTarget; });
+  }
+  function renderBottleRoom(animateTarget = null) {
+    renderBottlePlayers(animateTarget);
+    renderBottleTargets();
+    renderBottleChat();
+    const players = bottleRoom ? bottleRoom.players : [];
+    $('bottle-room-label').textContent = `КОМНАТА ${bottleRoomId.toUpperCase()} · ${players.length}/10`;
+    const myTurn = !!bottleRoom && bottleRoom.current_turn === bottlePlayerId;
+    const canSpin = myTurn && players.length >= 2 && !bottleRoom.pending && !bottleSpinning && bottleSocket && bottleSocket.readyState === WebSocket.OPEN;
+    $('bottle-spin-button').disabled = !canSpin;
+    let turnText = 'ОЖИДАНИЕ ИГРОКОВ';
+    if (bottleRoom && bottleRoom.pending) {
+      turnText = `${bottlePlayerName(bottleRoom.pending.spinner_id)} + ${bottlePlayerName(bottleRoom.pending.target_id)}: ВЫБОР`;
+    } else if (players.length >= 2) {
+      turnText = myTurn ? 'ВАШ ХОД' : `ХОД: ${bottlePlayerName(bottleRoom && bottleRoom.current_turn)}`;
+    }
+    $('bottle-turn-text').textContent = turnText;
+    updateBottleChoice();
+  }
+  function startBottleSpin(targetId, duration) {
+    if (!bottleRoom) return;
+    const index = bottleRoom.players.findIndex(player => player.id === targetId);
+    if (index < 0) return;
+    clearTimeout(bottleSpinTimer);
+    bottleSpinning = true;
+    $('bottle-choice').hidden = true;
+    const targetAngle = index * 360 / bottleRoom.players.length;
+    const delta = ((targetAngle - bottleSpinRotation) % 360 + 360) % 360;
+    bottleSpinRotation += 360 * 5 + delta;
+    const bottle = $('bottle-spin');
+    bottle.classList.remove('spinning');
+    void bottle.offsetWidth;
+    requestAnimationFrame(() => {
+      bottle.classList.add('spinning');
+      bottle.style.transform = `rotate(${bottleSpinRotation}deg)`;
+    });
+    bottleStatus(`${bottlePlayerName(targetId)} — цель бутылочки!`);
+    renderBottleRoom();
+    bottleSpinTimer = setTimeout(() => {
+      bottleSpinning = false;
+      renderBottleRoom();
+    }, duration + 80);
+  }
+  function updateBottleChoice() {
+    const choice = $('bottle-choice');
+    const pending = bottleRoom && bottleRoom.pending;
+    const participant = pending && [pending.spinner_id, pending.target_id].includes(bottlePlayerId);
+    choice.hidden = !participant || bottleSpinning;
+    if (choice.hidden) return;
+    const otherId = pending.spinner_id === bottlePlayerId ? pending.target_id : pending.spinner_id;
+    const chosen = pending.choices.includes(bottlePlayerId);
+    $('bottle-choice-title').textContent = `${bottlePlayerName(bottlePlayerId)} + ${bottlePlayerName(otherId)}`;
+    $('bottle-choice-note').textContent = chosen ? 'Выбор принят. Ждём второго игрока.' : 'Выбор соперника скрыт до завершения раунда.';
+    $('bottle-choice-kiss').disabled = chosen;
+    $('bottle-choice-humiliate').disabled = chosen;
+  }
+  function renderBottleChat() {
+    const container = $('bottle-chat-messages');
+    container.replaceChildren();
+    const messages = bottleRoom ? bottleRoom.messages || [] : [];
+    for (const message of messages) container.appendChild(bottleChatElement(message));
+    container.scrollTop = container.scrollHeight;
+  }
+  function bottleChatElement(message) {
+    const line = document.createElement('div');
+    line.className = 'bottle-chat-message' + (message.system ? ' system' : '');
+    if (!message.system) {
+      const name = document.createElement('strong');
+      name.textContent = `${message.username}:`;
+      line.appendChild(name);
+    }
+    line.appendChild(document.createTextNode(message.text));
+    return line;
+  }
+  function appendBottleChat(message) {
+    if (!bottleRoom) return;
+    bottleRoom.messages = bottleRoom.messages || [];
+    if (bottleRoom.messages.some(item => item.id === message.id)) return;
+    bottleRoom.messages.push(message);
+    bottleRoom.messages = bottleRoom.messages.slice(-50);
+    const container = $('bottle-chat-messages');
+    container.appendChild(bottleChatElement(message));
+    while (container.children.length > 50) container.firstElementChild.remove();
+    container.scrollTop = container.scrollHeight;
+  }
+
+  $('bottle-back').addEventListener('click', () => showScreen('hub'));
+  $('bottle-btn-gems').addEventListener('click', openDonate);
+  $('bottle-spin-button').addEventListener('click', () => {
+    if (bottleSend({ action: 'spin' })) $('bottle-spin-button').disabled = true;
+  });
+  $('bottle-choice-kiss').addEventListener('click', () => bottleSend({ action: 'choice', choice: 'kiss' }));
+  $('bottle-choice-humiliate').addEventListener('click', () => bottleSend({ action: 'choice', choice: 'humiliate' }));
+  $('bottle-effect-target').addEventListener('change', event => {
+    bottleSelectedTarget = Number(event.target.value) || null;
+    renderBottlePlayers();
+  });
+  document.querySelectorAll('.bottle-gift').forEach(button => {
+    button.addEventListener('click', () => {
+      if (!bottleSelectedTarget) { $('bottle-gift-note').textContent = 'Выберите получателя.'; return; }
+      const effect = button.dataset.effect;
+      if (bottleSend({ action: 'effect', target_id: bottleSelectedTarget, effect })) {
+        $('bottle-gift-note').textContent = `Отправка: ${BOTTLE_EFFECTS[effect].emoji} ${BOTTLE_EFFECTS[effect].name}…`;
+      }
+    });
+  });
+  $('bottle-chat-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const input = $('bottle-chat-input');
+    const text = input.value.trim();
+    if (text && bottleSend({ action: 'chat', text })) input.value = '';
+  });
+  window.addEventListener('pagehide', disconnectBottle);
+  window.__bottle = {
+    get room() { return bottleRoom; },
+    get playerId() { return bottlePlayerId; },
+    get socket() { return bottleSocket; },
+    connect: connectBottle,
+    disconnect: disconnectBottle
+  };
 
   applyOutfit();
   applyMistress();

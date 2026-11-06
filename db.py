@@ -67,7 +67,11 @@ def init_database() -> None:
                 oldest_slave_no INTEGER NOT NULL DEFAULT 1,
                 referred_by BIGINT REFERENCES players(id),
                 last_seen TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                last_offline_tick TIMESTAMPTZ
+                last_offline_tick TIMESTAMPTZ,
+                avatar_url TEXT NOT NULL DEFAULT '',
+                current_effect TEXT NOT NULL DEFAULT '',
+                bottle_rating INTEGER NOT NULL DEFAULT 0,
+                bottle_revision INTEGER NOT NULL DEFAULT 0
             )
             """
         )
@@ -106,6 +110,18 @@ def init_database() -> None:
         )
         connection.execute(
             "ALTER TABLE players ADD COLUMN IF NOT EXISTS last_offline_tick TIMESTAMPTZ"
+        )
+        connection.execute(
+            "ALTER TABLE players ADD COLUMN IF NOT EXISTS avatar_url TEXT NOT NULL DEFAULT ''"
+        )
+        connection.execute(
+            "ALTER TABLE players ADD COLUMN IF NOT EXISTS current_effect TEXT NOT NULL DEFAULT ''"
+        )
+        connection.execute(
+            "ALTER TABLE players ADD COLUMN IF NOT EXISTS bottle_rating INTEGER NOT NULL DEFAULT 0"
+        )
+        connection.execute(
+            "ALTER TABLE players ADD COLUMN IF NOT EXISTS bottle_revision INTEGER NOT NULL DEFAULT 0"
         )
         connection.execute(
             "CREATE INDEX IF NOT EXISTS players_last_seen_idx ON players (last_seen)"
