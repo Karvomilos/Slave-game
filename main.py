@@ -23,6 +23,7 @@ from telegram_init_data import TelegramInitDataError, parse, validate
 from bottle_rooms import BottleRoomManager
 from db import database, init_database
 from payments import PaymentError, create_payment, create_ruble_payment, get_verified_payment, payment_credentials_configured
+from tax import create_tax_receipt
 
 BASE_DIR = Path(__file__).resolve().parent
 GAME_URL = os.getenv("GAME_URL", "https://slave-game.karvomilos.workers.dev/")
@@ -796,6 +797,7 @@ def payment_webhook(notification: PaymentNotification) -> dict[str, bool]:
         verified = get_verified_payment(payment_id)
     except PaymentError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
+    fiscalize_payment = False
     with database() as connection:
         stored = connection.execute(
             "SELECT * FROM payments WHERE id = ? FOR UPDATE", (payment_id,)
@@ -826,6 +828,7 @@ def payment_webhook(notification: PaymentNotification) -> dict[str, bool]:
                 (status, payment_id, status),
             ).fetchone()
             if updated:
+                fiscalize_payment = True
                 if stored["crystals"]:
                     connection.execute(
                         """
@@ -855,6 +858,11 @@ def payment_webhook(notification: PaymentNotification) -> dict[str, bool]:
                 "UPDATE payments SET status = ? WHERE id = ?", (status, payment_id)
             )
         connection.commit()
+    if fiscalize_payment:
+        try:
+            asyncio.run(create_tax_receipt(payment_id, Decimal(str(amount.get("value")))))
+        except Exception:
+            logging.error("Не удалось создать чек ФНС для платежа %s", payment_id, exc_info=True)
     return {"ok": True}
 
 

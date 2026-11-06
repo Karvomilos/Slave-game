@@ -5,3 +5,4 @@ telegram-init-data==1.1.0
 psycopg[binary]==3.2.13
 httpx==0.28.1
 yookassa==3.13.0
+nalogo==1.2.0
