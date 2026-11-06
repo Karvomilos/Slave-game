@@ -16,7 +16,8 @@ from aiogram.filters import CommandStart
 from aiogram.types import BotCommand, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
 from fastapi import FastAPI, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 from telegram_init_data import TelegramInitDataError, parse, validate
 
@@ -536,9 +537,11 @@ async def lifespan(_: FastAPI):
         for task in tasks:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
+        await bottle_manager.close()
 
 
 app = FastAPI(title="ПОДОПЫТНЫЙ 001 API", lifespan=lifespan)
+app.mount("/assets", StaticFiles(directory=BASE_DIR / "assets"), name="assets")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -560,6 +563,14 @@ bottle_manager = BottleRoomManager(
 @app.websocket("/ws/room/{room_id}")
 async def bottle_room(websocket: WebSocket, room_id: str) -> None:
     await bottle_manager.endpoint(websocket, room_id)
+
+
+@app.get("/api/bottle/music/{track_id}")
+def bottle_music(track_id: str) -> Response:
+    content = bottle_manager.music_content(track_id)
+    if content is None:
+        raise HTTPException(status_code=404, detail="Трек больше не доступен")
+    return Response(content=content, media_type="audio/mpeg")
 
 
 @app.post("/api/load_data")

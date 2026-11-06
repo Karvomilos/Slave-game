@@ -512,6 +512,11 @@
   }
   function syncSound() {
     if (masterGain) masterGain.gain.setTargetAtTime(soundOn ? volume : 0, AC.currentTime, 0.02);
+    const radio = $('bottle-radio-audio');
+    radio.volume = volume;
+    radio.muted = !soundOn;
+    if (!soundOn) radio.pause();
+    else if (radio.src && currentScreen === 'bottle' && !document.hidden) playBottleRadio();
     for (const prefix of ['', 'hub-']) {
       $(prefix + 'btn-sound').textContent = soundOn ? `Звук: ${Math.round(volume * 100)}%` : 'Звук: выкл';
       $(prefix + 'btn-sound').classList.toggle('off', !soundOn);
@@ -616,7 +621,7 @@
       ambientGain = g;
     }
     if (!musicBus) {
-      musicBus = c.createGain(); musicBus.gain.value = currentScreen === 'hub' ? 0.95 : 0.55;
+      musicBus = c.createGain(); musicBus.gain.value = currentScreen === 'hub' ? 0.95 : currentScreen === 'bottle' && $('bottle-radio-audio').src ? 0 : 0.55;
       drumBus = c.createGain(); drumBus.gain.value = 0.85;
       // пространство: дилэй с обратной связью
       delayNode = c.createDelay(1.2); delayNode.delayTime.value = 0.36;
@@ -831,6 +836,8 @@
     if (soundOn) { audio(); startAmbient(); }
   });
   document.addEventListener('visibilitychange', () => {
+    if (document.hidden) $('bottle-radio-audio').pause();
+    else if (currentScreen === 'bottle' && soundOn && $('bottle-radio-audio').src) playBottleRadio();
     if (!AC) return;
     if (document.hidden) {
       if (AC.state !== 'closed') AC.suspend().catch(() => {});
@@ -935,6 +942,10 @@
     if (mode === 'telegram' && !telegramPhotoUrl()) { sfx.deny(); return; }
     avatarMode = mode;
     renderAvatars();
+    renderBottlePlayers();
+    if (bottleSocket && bottleSocket.readyState === WebSocket.OPEN) {
+      bottleSend({ action: 'avatar', avatar_mode: mode, avatar_url: mode === 'telegram' ? telegramPhotoUrl() : '' });
+    }
     fillAvatarElement($('avatar-preview'));
     $('avatar-note').textContent = mode === 'telegram' ? 'Используется фото Telegram.' : 'Теперь аватар повторяет внешний вид питомца.';
     scheduleSave();
@@ -957,7 +968,7 @@
     if (AC) {
       gridStart = AC.currentTime + 0.12;
       stepCount = 0;
-      if (musicBus) musicBus.gain.setTargetAtTime(screen === 'hub' ? 0.95 : 0.55, AC.currentTime, 0.15);
+      syncBottleAmbient();
     }
     renderAvatars();
     window.scrollTo(0, 0);
@@ -3724,11 +3735,14 @@
   const BOTTLE_EFFECTS = {
     poop: { name: 'Какашка', emoji: '💩', cost: 10 },
     kiss: { name: 'Поцелуй', emoji: '💋', cost: 20 },
+    rose: { name: 'Роза', emoji: '🌹', cost: 15 },
+    wine: { name: 'Вино', emoji: '🍷', cost: 30 },
     crown: { name: 'Корона', emoji: '👑', cost: 100 },
     fire: { name: 'Огонь', emoji: '🔥', cost: 250 }
   };
   const bottleRoomParam = new URLSearchParams(window.location.search).get('room') || 'main';
   const bottleRoomId = /^[A-Za-z0-9_-]{1,32}$/.test(bottleRoomParam) ? bottleRoomParam : 'main';
+  const bottleRadio = $('bottle-radio-audio');
   let bottleSocket = null;
   let bottleRoom = null;
   let bottlePlayerId = Number.isInteger(telegramUserId) ? telegramUserId : null;
@@ -3738,6 +3752,88 @@
   let bottleSpinTimer = null;
   let bottleSpinning = false;
   let bottleSpinRotation = 0;
+  let bottleMusicId = null;
+  let bottleTypingTimer = null;
+  let bottleUploadPending = false;
+
+  function bottleConnected() {
+    return !!bottleSocket && bottleSocket.readyState === WebSocket.OPEN;
+  }
+  function bottleMediaUrl(value, localPrefix) {
+    if (typeof value !== 'string') return '';
+    try {
+      if (value.startsWith(localPrefix)) return new URL(value, API_BASE || window.location.origin).href;
+      return value.startsWith('https://') ? value : '';
+    } catch (e) { return ''; }
+  }
+  function syncBottleAmbient() {
+    if (!AC || !musicBus) return;
+    const radioActive = currentScreen === 'bottle' && !!bottleMusicId && !bottleRadio.ended;
+    const level = radioActive ? 0 : currentScreen === 'hub' ? 0.95 : 0.55;
+    musicBus.gain.setTargetAtTime(level, AC.currentTime, 0.15);
+  }
+  function renderBottleRadio() {
+    const music = bottleRoom && bottleRoom.music;
+    $('bottle-radio-toggle').classList.toggle('active', !!music);
+    $('bottle-radio-note').textContent = music ? `🎵 «${music.name}» · включил ${music.started_by}` : 'Радио пока молчит.';
+    $('bottle-radio-url-submit').disabled = !bottleConnected();
+    $('bottle-radio-upload').disabled = !bottleConnected() || bottleUploadPending;
+    if (!music) $('bottle-radio-play').hidden = true;
+  }
+  function playBottleRadio() {
+    if (!bottleMusicId || currentScreen !== 'bottle' || document.hidden || !soundOn || !bottleRadio.src) return;
+    const attempt = bottleRadio.play();
+    if (attempt && typeof attempt.then === 'function') {
+      attempt.then(() => { $('bottle-radio-play').hidden = true; }).catch(() => {
+        if (bottleMusicId && currentScreen === 'bottle' && !document.hidden) $('bottle-radio-play').hidden = false;
+      });
+    }
+  }
+  function setBottleMusic(music) {
+    if (!music || !music.id) {
+      if (bottleMusicId) stopBottleRadio();
+      return;
+    }
+    if (music.id === bottleMusicId) {
+      renderBottleRadio();
+      playBottleRadio();
+      return;
+    }
+    const source = bottleMediaUrl(music.url, '/api/bottle/music/');
+    if (!source) return;
+    bottleMusicId = music.id;
+    bottleRadio.pause();
+    $('bottle-radio-play').hidden = true;
+    bottleRadio.src = source;
+    const startedAt = Date.parse(music.started_at || '');
+    bottleRadio.addEventListener('loadedmetadata', () => {
+      if (music.id !== bottleMusicId || !Number.isFinite(startedAt)) return;
+      const offset = Math.max(0, (Date.now() - startedAt) / 1000);
+      if (Number.isFinite(bottleRadio.duration)) bottleRadio.currentTime = Math.min(offset, bottleRadio.duration);
+    }, { once: true });
+    bottleRadio.load();
+    renderBottleRadio();
+    syncBottleAmbient();
+    playBottleRadio();
+  }
+  function stopBottleRadio() {
+    bottleMusicId = null;
+    bottleRadio.pause();
+    bottleRadio.removeAttribute('src');
+    bottleRadio.load();
+    $('bottle-radio-play').hidden = true;
+    renderBottleRadio();
+    syncBottleAmbient();
+  }
+  function showBottleTyping(event) {
+    clearTimeout(bottleTypingTimer);
+    $('bottle-typing').textContent = `${event.username || 'Игрок'} печатает…`;
+    bottleTypingTimer = setTimeout(() => { $('bottle-typing').textContent = ''; }, Math.max(500, Math.min(10000, Number(event.duration || 4) * 1000 + 500)));
+  }
+  function clearBottleTyping() {
+    clearTimeout(bottleTypingTimer);
+    $('bottle-typing').textContent = '';
+  }
 
   function bottleDemoId() {
     let id = null;
@@ -3774,6 +3870,8 @@
     }
     bottleRoom = null;
     bottleSelectedTarget = null;
+    clearBottleTyping();
+    stopBottleRadio();
   }
   async function enterBottle() {
     if (!await confirmHubRegistration()) return;
@@ -3795,7 +3893,7 @@
       const auth = initData
         ? { initData }
         : { demo_id: bottleDemoId(), username: displayName };
-      socket.send(JSON.stringify({ type: 'join', ...auth }));
+      socket.send(JSON.stringify({ type: 'join', ...auth, avatar_mode: avatarMode }));
       bottleStatus('Соединение установлено. Ожидаем игроков…');
     });
     socket.addEventListener('message', event => {
@@ -3809,6 +3907,8 @@
     socket.addEventListener('close', event => {
       if (socket !== bottleSocket) return;
       bottleSocket = null;
+      bottleRadio.pause();
+      clearBottleTyping();
       renderBottleRoom();
       if (event.code === 4000) {
         bottleShouldReconnect = false;
@@ -3851,7 +3951,12 @@
       }
     } else if (event.type === 'balance_changed') {
       applyBottleBalance(event.crystals, event.bottle_revision, true);
+    } else if (event.type === 'music_changed') {
+      setBottleRoom(event.room);
+    } else if (event.type === 'typing') {
+      showBottleTyping(event);
     } else if (event.type === 'chat_message') {
+      if (event.message.player_id === -1) clearBottleTyping();
       appendBottleChat(event.message);
     } else if (event.type === 'error') {
       $('bottle-gift-note').textContent = event.message;
@@ -3873,6 +3978,7 @@
   }
   function setBottleRoom(room, animateTarget = null) {
     bottleRoom = room;
+    setBottleMusic(room.music);
     renderBottleRoom(animateTarget);
   }
   function bottlePlayerName(id) {
@@ -3918,10 +4024,11 @@
         $('bottle-effect-target').value = String(player.id);
         renderBottleRoom();
       });
-      if (player.avatar_url && /^https:\/\//.test(player.avatar_url)) {
+      const avatarUrl = bottleMediaUrl(player.avatar_url, '/assets/fake_goddess/');
+      if (avatarUrl) {
         const image = document.createElement('img');
         image.className = 'bottle-avatar-image';
-        image.src = player.avatar_url;
+        image.src = avatarUrl;
         image.alt = `Аватар ${player.username}`;
         image.referrerPolicy = 'no-referrer';
         image.addEventListener('error', () => image.replaceWith(bottleFallback(player)), { once: true });
@@ -3985,6 +4092,7 @@
     renderBottlePlayers(animateTarget);
     renderBottleTargets();
     renderBottleChat();
+    renderBottleRadio();
     const players = bottleRoom ? bottleRoom.players : [];
     $('bottle-room-label').textContent = `КОМНАТА ${bottleRoomId.toUpperCase()} · ${players.length}/10`;
     const myTurn = !!bottleRoom && bottleRoom.current_turn === bottlePlayerId;
@@ -4066,6 +4174,59 @@
     container.scrollTop = container.scrollHeight;
   }
 
+  $('bottle-radio-toggle').addEventListener('click', () => {
+    const panel = $('bottle-radio-panel');
+    panel.hidden = !panel.hidden;
+    $('bottle-radio-toggle').setAttribute('aria-expanded', String(!panel.hidden));
+  });
+  $('bottle-radio-play').addEventListener('click', playBottleRadio);
+  $('bottle-radio-url-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const input = $('bottle-radio-url');
+    const url = input.value.trim();
+    if (!url) return;
+    const name = url.split('/').pop().split('?')[0] || 'MP3 по ссылке';
+    if (bottleSend({ action: 'music', source: 'url', url, name })) {
+      $('bottle-radio-note').textContent = 'Проверяем ссылку и баланс…';
+      input.value = '';
+    }
+  });
+  $('bottle-radio-upload').addEventListener('click', () => {
+    const input = $('bottle-radio-file');
+    const file = input.files && input.files[0];
+    if (!file) { bottleStatus('Сначала выберите MP3-файл.', true); return; }
+    if (!file.name.toLowerCase().endsWith('.mp3') || !file.size || file.size > 5 * 1024 * 1024) {
+      bottleStatus('Нужен MP3-файл размером от 1 байта до 5 МБ.', true);
+      sfx.deny();
+      return;
+    }
+    if (!bottleConnected()) { bottleStatus('Дождитесь подключения к комнате.', true); return; }
+    const reader = new FileReader();
+    bottleUploadPending = true;
+    renderBottleRadio();
+    $('bottle-radio-note').textContent = `Читаем «${file.name}»…`;
+    reader.addEventListener('load', () => {
+      bottleUploadPending = false;
+      input.value = '';
+      renderBottleRadio();
+      if (bottleSend({ action: 'music', source: 'upload', name: file.name, data: reader.result })) {
+        $('bottle-radio-note').textContent = 'Отправляем трек в комнату…';
+      }
+    });
+    reader.addEventListener('error', () => {
+      bottleUploadPending = false;
+      renderBottleRadio();
+      bottleStatus('Не удалось прочитать выбранный файл.', true);
+      sfx.deny();
+    });
+    reader.readAsDataURL(file);
+  });
+  bottleRadio.addEventListener('ended', syncBottleAmbient);
+  bottleRadio.addEventListener('error', () => {
+    if (!bottleMusicId) return;
+    $('bottle-radio-note').textContent = 'Не удалось загрузить трек. Проверьте MP3-ссылку.';
+    $('bottle-radio-play').hidden = false;
+  });
   $('bottle-back').addEventListener('click', () => showScreen('hub'));
   $('bottle-btn-gems').addEventListener('click', openDonate);
   $('bottle-spin-button').addEventListener('click', () => {

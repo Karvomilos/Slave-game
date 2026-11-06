@@ -1017,14 +1017,14 @@
 
 
 /* ---------- мультиплеер «Бутылочка» ---------- */
-.bottle-screen[hidden], .bottle-choice[hidden] { display: none; }
+.bottle-screen[hidden], .bottle-choice[hidden], .bottle-radio-panel[hidden], .bottle-radio-status button[hidden] { display: none; }
 .bottle-screen {
   position: relative; z-index: 3; height: 100vh; height: 100dvh; overflow-y: auto;
   padding: clamp(12px, 2.4vw, 28px);
   background: radial-gradient(ellipse at 45% 36%, rgba(130,15,46,.2), transparent 48%), #06070b;
 }
 .bottle-header {
-  position: relative; z-index: 5; display: grid; grid-template-columns: 1fr auto 1fr;
+  position: relative; z-index: 5; display: grid; grid-template-columns: 1fr auto auto 1fr; gap: 12px;
   max-width: 1100px; margin: 0 auto; padding-bottom: 12px;
 }
 .bottle-header > .chip { justify-self: end; align-self: center; }
@@ -1035,6 +1035,22 @@
 .bottle-title small { color: #b5546b; font-size: 8px; letter-spacing: .13em; }
 .bottle-connection { min-height: 20px; margin: 10px auto 4px; color: var(--muted); text-align: center; font-size: 10px; }
 .bottle-connection.error { color: #ff7c8f; }
+.bottle-radio-toggle { align-self: center; white-space: nowrap; }
+.bottle-radio-toggle.active { border-color: #b94b68; color: #ef9cb0; }
+.bottle-radio-panel { width: min(100%, 1100px); margin: 8px auto 14px; padding: 14px; border: 1px solid rgba(209,75,108,.22); background: rgba(16,13,21,.96); }
+.bottle-radio-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.bottle-radio-heading strong { color: #e2cbd3; font: 11px 'Russo One', sans-serif; letter-spacing: .12em; }
+.bottle-radio-heading span { color: var(--muted); font-size: 9px; }
+.bottle-radio-link { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.bottle-radio-link input { min-width: 0; padding: 11px; border: 1px solid rgba(255,255,255,.12); background: #0c0e15; color: var(--ink); font: 10px 'JetBrains Mono', monospace; user-select: text; -webkit-user-select: text; }
+.bottle-radio-link button, .bottle-radio-upload button, .bottle-radio-status button { padding: 10px 14px; border: 1px solid #a33b58; background: #6f2038; color: #fff0f4; font: 9px 'Russo One', sans-serif; cursor: pointer; }
+.bottle-radio-link button:disabled, .bottle-radio-upload button:disabled { opacity: .45; cursor: default; }
+.bottle-radio-upload { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; margin-top: 10px; }
+.bottle-radio-upload label { color: #b8a4ac; font-size: 9px; }
+.bottle-radio-upload input { min-width: 0; max-width: 100%; color: var(--muted); font-size: 9px; }
+.bottle-radio-status { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 20px; margin-top: 10px; color: #c493a3; font-size: 9px; overflow-wrap: anywhere; }
+.bottle-radio-status button { flex-shrink: 0; }
+#bottle-radio-audio { display: none; }
 .bottle-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; width: min(100%, 1100px); margin: 0 auto; }
 .bottle-game-panel { position: relative; min-width: 0; border: 1px solid rgba(255,255,255,.08); background: rgba(9,9,15,.68); }
 .bottle-table { position: relative; width: 100%; height: 560px; overflow: hidden; }
@@ -1094,7 +1110,9 @@
 .bottle-chat { width: min(100%, 1100px); margin: 16px auto 0; border: 1px solid rgba(255,255,255,.09); background: rgba(10,11,16,.92); }
 .bottle-chat-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.07); }
 .bottle-chat-heading h2 { font: 11px 'Russo One', sans-serif; letter-spacing: .12em; }
-.bottle-chat-heading span { color: var(--muted); font-size: 8px; }
+.bottle-chat-heading small { margin-left: auto; color: var(--muted); font-size: 8px; }
+.bottle-chat-heading #bottle-typing { margin-left: auto; color: #dc8299; font-size: 9px; }
+.bottle-chat-heading #bottle-typing:not(:empty) + small { display: none; }
 .bottle-chat-messages { display: flex; flex-direction: column; gap: 7px; height: 155px; overflow-y: auto; padding: 12px 14px; overscroll-behavior: contain; }
 .bottle-chat-message { color: #c8bec3; font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
 .bottle-chat-message strong { margin-right: 7px; color: #e7dbe0; }
@@ -1104,8 +1122,18 @@
 .bottle-chat-form button { padding: 0 18px; border: none; border-left: 1px solid rgba(255,255,255,.09); background: #19202a; color: #d9e0e8; font: 9px 'Russo One', sans-serif; cursor: pointer; }
 @media (max-width: 800px) {
   .bottle-screen { padding: calc(10px + env(safe-area-inset-top, 0px)) 8px calc(20px + env(safe-area-inset-bottom, 0px)); }
-  .bottle-header { grid-template-columns: auto 1fr auto; gap: 7px; }
+  .bottle-header { grid-template-columns: auto 1fr auto auto; gap: 7px; }
   .bottle-back { padding: 8px; font-size: 8px; }
+  .bottle-radio-toggle { padding: 8px; font-size: 9px; }
+  .bottle-radio-toggle span { display: none; }
+  .bottle-radio-panel { padding: 11px; }
+  .bottle-radio-heading { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .bottle-radio-link { grid-template-columns: 1fr; }
+  .bottle-radio-upload { grid-template-columns: 1fr; gap: 7px; }
+  .bottle-radio-upload button { min-height: 38px; }
+  .bottle-radio-status { align-items: flex-start; }
+  .bottle-chat-heading { flex-wrap: wrap; }
+  .bottle-chat-heading small { display: none; }
   .bottle-title h1 { font-size: 16px; }
   .bottle-title > span { display: none; }
   .bottle-title small { font-size: 6px; }

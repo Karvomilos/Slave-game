@@ -63,9 +63,24 @@
   <header class="bottle-header">
     <button class="panel-btn bottle-back" id="bottle-back" type="button">← В Хаб</button>
     <div class="bottle-title"><span>SOCIAL ROOM · 18+</span><h1>БУТЫЛОЧКА</h1><small id="bottle-room-label">КОМНАТА MAIN · 0/10</small></div>
+    <button class="panel-btn bottle-radio-toggle" id="bottle-radio-toggle" type="button" aria-expanded="false" aria-controls="bottle-radio-panel">🎵 <span>Радио</span></button>
     <div class="chip gem"><i>◆</i><b id="bottle-v-gems">0</b><span>клятв</span><button class="plus" id="bottle-btn-gems" title="Купить клятвы">+</button></div>
   </header>
   <p class="bottle-connection" id="bottle-connection" role="status">Подключение к комнате…</p>
+  <section class="bottle-radio-panel" id="bottle-radio-panel" aria-label="Общее радио комнаты" hidden>
+    <div class="bottle-radio-heading"><strong>ОБЩЕЕ РАДИО</strong><span>Новый трек заменит текущий у всех игроков.</span></div>
+    <form class="bottle-radio-link" id="bottle-radio-url-form">
+      <input id="bottle-radio-url" type="url" maxlength="2048" placeholder="Прямая HTTPS-ссылка на MP3" aria-label="Ссылка на MP3">
+      <button id="bottle-radio-url-submit" type="submit">Включить за ◆ 3</button>
+    </form>
+    <div class="bottle-radio-upload">
+      <label for="bottle-radio-file">MP3 с устройства · до 5 МБ</label>
+      <input id="bottle-radio-file" type="file" accept=".mp3,audio/mpeg">
+      <button id="bottle-radio-upload" type="button">Включить файл за ◆ 3</button>
+    </div>
+    <div class="bottle-radio-status"><span id="bottle-radio-note" aria-live="polite">Радио пока молчит.</span><button id="bottle-radio-play" type="button" hidden>▶ Слушать</button></div>
+    <audio id="bottle-radio-audio" preload="none"></audio>
+  </section>
 
   <div class="bottle-layout">
     <section class="bottle-game-panel" aria-label="Круг игроков">
@@ -99,6 +114,8 @@
       <div class="bottle-gift-grid">
         <button class="bottle-gift poop" type="button" data-effect="poop"><span class="gift-icon">💩</span><strong>Какашка</strong><small>◆ 10 клятв</small></button>
         <button class="bottle-gift kiss" type="button" data-effect="kiss"><span class="gift-icon">💋</span><strong>Поцелуй</strong><small>◆ 20 клятв</small></button>
+        <button class="bottle-gift rose" type="button" data-effect="rose"><span class="gift-icon">🌹</span><strong>Роза</strong><small>◆ 15 клятв</small></button>
+        <button class="bottle-gift wine" type="button" data-effect="wine"><span class="gift-icon">🍷</span><strong>Вино</strong><small>◆ 30 клятв</small></button>
         <button class="bottle-gift crown" type="button" data-effect="crown"><span class="gift-icon">👑</span><strong>Корона</strong><small>◆ 100 клятв</small></button>
         <button class="bottle-gift fire" type="button" data-effect="fire"><span class="gift-icon">🔥</span><strong>Огонь</strong><small>◆ 250 клятв</small></button>
       </div>
@@ -107,7 +124,7 @@
   </div>
 
   <section class="bottle-chat" aria-label="Чат комнаты">
-    <div class="bottle-chat-heading"><h2>ЧАТ КОМНАТЫ</h2><span>события и сообщения игроков</span></div>
+    <div class="bottle-chat-heading"><h2>ЧАТ КОМНАТЫ</h2><span id="bottle-typing" aria-live="polite"></span><small>события и сообщения игроков</small></div>
     <div class="bottle-chat-messages" id="bottle-chat-messages" aria-live="polite"></div>
     <form class="bottle-chat-form" id="bottle-chat-form"><input id="bottle-chat-input" type="text" maxlength="300" autocomplete="off" placeholder="Написать в комнату…" aria-label="Сообщение"><button type="submit">ОТПРАВИТЬ</button></form>
   </section>
